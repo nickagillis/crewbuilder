@@ -1,0 +1,103 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Web Interface (Next.js)
+web/node_modules/
+web/.next/
+web/.swc/
+web/out/
+web/build/
+web/dist/
+
+# Web Dependencies
+web/package-lock.json
+
+# Logs
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+
+# Environment variables
+web/.env.local
+web/.env.development.local
+web/.env.test.local
+web/.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# CrewBuilder specific
+generated_output/
+temp_crews/
+.serena/cache/
+
+# API keys and secrets
+.env
+config/secrets.json
