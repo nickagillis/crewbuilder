@@ -9,6 +9,8 @@ interface APIKeySettingsProps {
 }
 
 interface KeyStatus {
+  has_openai_key?: boolean
+  has_anthropic_key?: boolean
   openai?: boolean
   anthropic?: boolean
 }
