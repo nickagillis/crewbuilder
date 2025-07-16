@@ -271,8 +271,8 @@ def run_complete_pipeline(requirement: str, skip_clarification: bool = False) ->
             'output': {
                 'main_code_length': len(generated_code.main_code),
                 'requirements_count': len(generated_code.requirements_txt.splitlines()),
-                'estimated_cost': generated_code.estimated_cost,
-                'performance_notes': generated_code.performance_notes[:100] + '...' if len(generated_code.performance_notes) > 100 else generated_code.performance_notes
+                'estimated_cost': str(generated_code.estimated_cost),
+                'performance_notes': str(generated_code.performance_notes)[:100] + '...' if len(str(generated_code.performance_notes)) > 100 else str(generated_code.performance_notes)
             }
         })
         
@@ -295,7 +295,7 @@ def run_complete_pipeline(requirement: str, skip_clarification: bool = False) ->
         print(" Stage 5: API integration analysis...")
         api_plan = agents['api_detective'].analyze_api_requirements(tech_spec, crew_architecture)
         
-        pipeline_results['estimatedCost'] = api_plan.estimated_monthly_cost
+        pipeline_results['estimatedCost'] = str(api_plan.estimated_monthly_cost)
         
         pipeline_results['pipeline_stages'].append({
             'stage': 'API Integration',
@@ -345,7 +345,7 @@ def run_complete_pipeline(requirement: str, skip_clarification: bool = False) ->
             'output': {
                 'recommended_platform': infra_recommendations.recommended_platform.name,
                 'setup_time': infra_recommendations.estimated_setup_time,
-                'monthly_cost': infra_recommendations.cost_analysis.monthly_estimate,
+                'monthly_cost': str(infra_recommendations.cost_analysis.monthly_estimate),
                 'security_score': infra_recommendations.security_assessment.overall_score
             }
         })
@@ -407,7 +407,9 @@ def run_complete_pipeline(requirement: str, skip_clarification: bool = False) ->
         return pipeline_results
         
     except Exception as e:
-        print(f" Pipeline error: {e}")
+        print(f" Pipeline error at stage {len(pipeline_results.get('pipeline_stages', []))}: {e}")
+        print(f" Error type: {type(e).__name__}")
+        print(f" Error details: {str(e)}")
         traceback.print_exc()
         
         # Return partial results with error info
@@ -416,6 +418,7 @@ def run_complete_pipeline(requirement: str, skip_clarification: bool = False) ->
             'status': 'failed',
             'output': {
                 'error': str(e),
+                'error_type': type(e).__name__,
                 'completed_stages': len([s for s in pipeline_results['pipeline_stages'] if s['status'] == 'completed'])
             }
         })
@@ -652,6 +655,19 @@ async def generate_system(request: GenerationRequest):
         result = run_complete_pipeline(refined_requirement, skip_clarification=request.skip_clarification)
         
         print(f" Generation completed successfully!")
+        
+        # Ensure the result is JSON serializable
+        try:
+            # Test serialization
+            import json
+            json.dumps(result)
+        except TypeError as e:
+            print(f" Warning: Result contains non-serializable data: {e}")
+            # Remove non-serializable fields
+            if 'generated_code' in result and hasattr(result['generated_code'], '__dict__'):
+                result['generated_code'] = str(result['generated_code'])
+            if 'requirements_txt' in result and hasattr(result['requirements_txt'], '__dict__'):
+                result['requirements_txt'] = str(result['requirements_txt'])
         
         return GenerationResponse(
             success=True,

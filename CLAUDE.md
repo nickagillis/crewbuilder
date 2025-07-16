@@ -152,6 +152,12 @@ The system includes 11 specialized agents:
 4. Follow existing code patterns and conventions
 5. Update PROGRESS.md when completing major features
 
+## Deployment Architecture
+- **Backend (Railway)**: Runs only the FastAPI server via `start.sh`
+- **Frontend (Vercel)**: Deploys from the `/web` directory
+- **Important**: Do NOT have Railway build the frontend - it lacks npm
+- **Vercel Config**: Uses `vercel.json` in root to specify web directory
+
 ## Environment Variables
 ```
 # Backend
@@ -168,13 +174,23 @@ NEXT_PUBLIC_API_URL=https://web-production-bd955.up.railway.app
 - **TypeScript errors**: Run `npm run type-check` to identify issues
 - **API connection**: Verify NEXT_PUBLIC_API_URL is set correctly
 - **Railway deployment**: Ensure RAILWAY_TOKEN is valid and has proper permissions
+- **Railway npm errors**: Railway only runs backend - frontend deploys to Vercel
+- **Vercel can't find app**: Check vercel.json points to web directory
+- **Import errors**: New agents may need optional imports for production
+- **Deployment not triggering**: May need empty commit after plan changes
 
 ## Next Session Priorities
-Based on CONSOLIDATED_STRATEGY.md:
-1. Test Railway deployment with real tokens
-2. Validate end-to-end system generation and deployment
-3. Calculate and document API usage costs
-4. Begin user testing with 3-5 beta users
+1. Test Clarification Agent in production
+2. Test client system deployment to shared Railway project
+3. Validate client dashboard functionality
+4. Test end-to-end: clarification → generation → deployment
+5. Calculate and document API usage costs
+
+## Lessons Learned
+- Railway and Vercel need separate deployments (backend/frontend)
+- New agent imports should be optional for production stability
+- Always test imports before pushing to production
+- Deployment webhooks may need reauthorization after plan changes
 
 ## Contact & Resources
 - Repository: [Check git remote for URL]

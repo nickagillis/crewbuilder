@@ -18,10 +18,17 @@ import {
 
 interface SystemOutputProps {
   system: {
-    name: string
+    systemName?: string
+    name?: string
     agents: number
     estimatedTime: string
     complexity: string
+    estimatedCost?: string
+    architecture?: any
+    deployment?: any
+    pipeline_stages?: any[]
+    generated_code?: string
+    requirements_txt?: string
   }
   onStartNew: () => void
 }
@@ -90,7 +97,7 @@ export default function SystemOutput({ system, onStartNew }: SystemOutputProps) 
 
       {/* System Overview */}
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-        <h4 className="text-xl font-bold text-gray-900 mb-4">{system.name}</h4>
+        <h4 className="text-xl font-bold text-gray-900 mb-4">{system.systemName || system.name || 'AI Agent System'}</h4>
         
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <div className="text-center">
@@ -110,7 +117,7 @@ export default function SystemOutput({ system, onStartNew }: SystemOutputProps) 
           </div>
           <div className="text-center">
             <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">$50-100</div>
+            <div className="text-2xl font-bold text-gray-900">{system.estimatedCost || '$50-100'}</div>
             <div className="text-sm text-gray-600">Monthly Cost</div>
           </div>
         </div>

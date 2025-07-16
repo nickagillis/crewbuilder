@@ -99,7 +99,7 @@ export default function Home() {
               <span className="text-sm text-gray-400">Phase 2: Learning-Enhanced</span>
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-xs text-gray-400">10 Agents Active</span>
+                <span className="text-xs text-gray-400">11 Agents Active</span>
               </div>
             </div>
           </div>
