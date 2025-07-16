@@ -2,7 +2,7 @@
 # Building AI agents that build AI agent systems
 
 # Core CrewAI framework
-crewai>=0.145.0
+crewai==0.141.0
 
 # FastAPI for web API server
 fastapi>=0.104.0
@@ -19,21 +19,8 @@ requests>=2.28.0
 # JSON and configuration handling
 configparser>=5.0.0
 
-# Async/await support
-asyncio-mqtt>=0.13.0
-
-# File system monitoring (optional for advanced features)
-watchdog>=3.0.0
-
-# Logging and monitoring
-structlog>=23.0.0
-
-# Development and testing
-pytest>=7.0.0
-pytest-asyncio>=0.21.0
-black>=23.0.0
-flake8>=6.0.0
-
-# Basic Memory GitHub Sync (legacy)
-# Optional: MCP client libraries (when available)
-# mcp-client>=1.0.0  # Future dependency
+# Development dependencies (not needed for production)
+# pytest>=7.0.0
+# pytest-asyncio>=0.21.0
+# black>=23.0.0
+# flake8>=6.0.0
