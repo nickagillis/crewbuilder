@@ -210,7 +210,10 @@ export const GenerationForm = ({ userId }: GenerationFormProps) => {
 
     } catch (error) {
       console.error('Generation error:', error)
-      setResult({ success: false, error: error.message })
+      setResult({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      })
     } finally {
       setGenerating(false)
     }
