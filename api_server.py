@@ -18,6 +18,7 @@ sys.path.insert(0, str(project_root))
 # FastAPI imports
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Import all 10 CrewBuilder agents
@@ -44,7 +45,13 @@ app = FastAPI(
 # Configure CORS for frontend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://web-production-bd955.up.railway.app",
+        "https://crewbuilder.vercel.app",  # If you deploy frontend to Vercel later
+        "https://crewbuilder.app"  # Future custom domain
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -405,6 +412,25 @@ async def root():
         "version": "1.0.0",
         "status": "operational",
         "agents_ready": len(agents) == 10
+    }
+
+@app.get("/")
+def root():
+    """Root endpoint - welcome message"""
+    return {
+        "message": "🚀 CrewBuilder API is Running!",
+        "status": "active",
+        "version": "1.0.0",
+        "description": "AI-powered system that generates and deploys AI agent teams",
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/health",
+            "generate": "/api/generate",
+            "deploy": "/api/deploy",
+            "feedback": "/api/feedback"
+        },
+        "frontend": "Deploy frontend separately or visit /docs for API testing",
+        "agents": len(agents) if agents else "Initializing..."
     }
 
 @app.get("/health")
