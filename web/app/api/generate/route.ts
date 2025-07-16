@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Connect to real CrewBuilder FastAPI backend
-    const backendUrl = process.env.CREWBUILDER_API_URL || 'http://localhost:8000'
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
     
     console.log(`Connecting to CrewBuilder backend: ${backendUrl}/api/generate`)
     
