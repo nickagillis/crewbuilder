@@ -21,22 +21,40 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-# Import all 11 CrewBuilder agents
-from agents import (
-    create_clarification_agent,
-    create_requirements_analyst,
-    create_system_architect, 
-    create_code_generator,
-    create_quality_assurance,
-    create_api_detective,
-    create_documentation_specialist,
-    create_infrastructure_analyst,
-    create_deployment_engineer,
-    create_hosting_assistant,
-    create_monitoring_engineer,
-    analyze_initial_requirement,
-    create_clarification_session
-)
+# Import all CrewBuilder agents
+try:
+    from agents import (
+        create_clarification_agent,
+        create_requirements_analyst,
+        create_system_architect, 
+        create_code_generator,
+        create_quality_assurance,
+        create_api_detective,
+        create_documentation_specialist,
+        create_infrastructure_analyst,
+        create_deployment_engineer,
+        create_hosting_assistant,
+        create_monitoring_engineer,
+        analyze_initial_requirement,
+        create_clarification_session
+    )
+    CLARIFICATION_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Clarification agent not available: {e}")
+    # Import core agents only
+    from agents import (
+        create_requirements_analyst,
+        create_system_architect, 
+        create_code_generator,
+        create_quality_assurance,
+        create_api_detective,
+        create_documentation_specialist,
+        create_infrastructure_analyst,
+        create_deployment_engineer,
+        create_hosting_assistant,
+        create_monitoring_engineer
+    )
+    CLARIFICATION_AVAILABLE = False
 
 # Create FastAPI app
 app = FastAPI(
@@ -106,14 +124,18 @@ class ClarificationAnswerResponse(BaseModel):
 agents = {}
 
 def initialize_agents():
-    """Initialize all 11 CrewBuilder agents"""
+    """Initialize all CrewBuilder agents"""
     global agents
     
     try:
         print(" Initializing CrewBuilder agents...")
         
-        agents['clarification_agent'] = create_clarification_agent()
-        print(" Clarification Agent ready")
+        if CLARIFICATION_AVAILABLE:
+            try:
+                agents['clarification_agent'] = create_clarification_agent()
+                print(" Clarification Agent ready")
+            except Exception as e:
+                print(f" Warning: Could not initialize Clarification Agent: {e}")
         
         agents['requirements_analyst'] = create_requirements_analyst()
         print(" Requirements Analyst ready")
@@ -145,7 +167,8 @@ def initialize_agents():
         agents['monitoring_engineer'] = create_monitoring_engineer()
         print(" Monitoring Engineer ready")
         
-        print(" All 11 CrewBuilder agents initialized and ready!")
+        agent_count = len(agents)
+        print(f" {agent_count} CrewBuilder agents initialized and ready!")
         return True
         
     except Exception as e:
@@ -442,7 +465,7 @@ async def root():
         "message": "CrewBuilder API - Building AI agents that build AI agent systems",
         "version": "1.0.0",
         "status": "operational",
-        "agents_ready": len(agents) == 11
+        "agents_ready": len(agents) >= 10  # At least 10 core agents
     }
 
 @app.get("/")
@@ -494,6 +517,10 @@ async def clarify_requirement(request: ClarificationRequest):
         
         print(f"💬 Clarification request received: {request.requirement[:100]}...")
         
+        # Check if clarification is available
+        if not CLARIFICATION_AVAILABLE:
+            raise HTTPException(status_code=501, detail="Clarification agent not available in this deployment")
+            
         # Check if agents are initialized
         if 'clarification_agent' not in agents:
             print(" Agents not initialized, initializing now...")
@@ -607,7 +634,7 @@ async def generate_system(request: GenerationRequest):
         print(f" Generation request received: {request.requirement[:100]}...")
         
         # Check if agents are initialized
-        if len(agents) != 11:
+        if len(agents) < 10:
             print(" Agents not initialized, initializing now...")
             if not initialize_agents():
                 raise HTTPException(status_code=500, detail="Failed to initialize CrewBuilder agents")

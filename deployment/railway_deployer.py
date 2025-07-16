@@ -408,25 +408,29 @@ class RailwayDeploymentManager:
             'requirements.txt': generated_system.get('requirements', '')
         }
         
-        # Generate client dashboard
-        from agents.dashboard_generator import generate_client_dashboard
-        dashboard_code = generate_client_dashboard(
-            client_name=project_name,
-            agent_system_info={
-                'requirements': generated_system.get('original_requirements', ''),
-                'agents': []  # TODO: Extract agent info from generated code
+        # Generate client dashboard if available
+        dashboard_files = {}
+        try:
+            from agents.dashboard_generator import generate_client_dashboard
+            dashboard_code = generate_client_dashboard(
+                client_name=project_name,
+                agent_system_info={
+                    'requirements': generated_system.get('original_requirements', ''),
+                    'agents': []  # TODO: Extract agent info from generated code
+                }
+            )
+            
+            # Convert dashboard code to dict format
+            dashboard_files = {
+                'app.py': dashboard_code.app_py,
+                'requirements.txt': dashboard_code.requirements_txt,
+                'templates/index.html': dashboard_code.templates_index,
+                'templates/setup.html': dashboard_code.templates_setup,
+                'templates/status.html': dashboard_code.templates_status,
+                'static/style.css': dashboard_code.static_style_css
             }
-        )
-        
-        # Convert dashboard code to dict format
-        dashboard_files = {
-            'app.py': dashboard_code.app_py,
-            'requirements.txt': dashboard_code.requirements_txt,
-            'templates/index.html': dashboard_code.templates_index,
-            'templates/setup.html': dashboard_code.templates_setup,
-            'templates/status.html': dashboard_code.templates_status,
-            'static/style.css': dashboard_code.static_style_css
-        }
+        except ImportError:
+            print("Warning: Dashboard generator not available")
         
         # Deploy using appropriate method
         if self.use_shared and hasattr(self.deployer, 'deploy_client_system'):
