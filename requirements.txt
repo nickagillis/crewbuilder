@@ -1,5 +1,30 @@
-﻿crewai>=0.1.0
-openai>=1.0.0
-pydantic>=2.0.0
+# Basic Memory GitHub Sync Requirements
+#
+# Core dependencies for the sync solution
+
+# JSON and configuration handling
+configparser>=5.0.0
+
+# Async/await support
+asyncio-mqtt>=0.13.0
+
+# File system monitoring (optional for advanced features)
+watchdog>=3.0.0
+
+# HTTP requests (if needed for direct API calls)
+requests>=2.28.0
+
+# Date/time handling
+python-dateutil>=2.8.0
+
+# Logging and monitoring
+structlog>=23.0.0
+
+# Development and testing
 pytest>=7.0.0
-python-dotenv>=1.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Optional: MCP client libraries (when available)
+# mcp-client>=1.0.0  # Future dependency
