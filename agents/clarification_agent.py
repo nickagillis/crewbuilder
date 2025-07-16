@@ -84,7 +84,11 @@ def analyze_initial_requirement(agent: Agent, requirement: str) -> List[Clarific
         expected_output="A list of clarification questions with context and options"
     )
     
-    result = agent.execute_task(task)
+    try:
+        result = agent.execute_task(task)
+    except Exception as e:
+        print(f"Warning: Could not execute clarification task: {e}")
+        result = ""
     
     # Parse the result into ClarificationQuestion objects
     questions = []
@@ -192,7 +196,11 @@ def refine_requirements(agent: Agent, original: str, questions: List[Clarificati
         expected_output="Comprehensive refined requirements document"
     )
     
-    result = agent.execute_task(task)
+    try:
+        result = agent.execute_task(task)
+    except Exception as e:
+        print(f"Warning: Could not execute clarification task: {e}")
+        result = ""
     
     # Parse the result into RefinedRequirements
     # This is simplified - in production, use better parsing

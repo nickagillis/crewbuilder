@@ -803,6 +803,16 @@ async def deploy_system(request: DeploymentRequest):
 async def startup_event():
     """Initialize all agents when the server starts"""
     print(" CrewBuilder API Server starting...")
+    print(f" Python version: {sys.version}")
+    print(f" Working directory: {Path.cwd()}")
+    
+    # Test imports
+    try:
+        import crewai
+        print(f" CrewAI version: {crewai.__version__ if hasattr(crewai, '__version__') else 'Unknown'}")
+    except ImportError as e:
+        print(f" ERROR: Could not import crewai: {e}")
+    
     success = initialize_agents()
     if success:
         print(" CrewBuilder API ready for business!")
