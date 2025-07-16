@@ -3,13 +3,23 @@
 
 import React, { useState, useEffect } from 'react'
 
+interface APIKeySettingsProps {
+  userId: string
+  onKeysUpdated: (keys: Record<string, string>) => void
+}
+
+interface KeyStatus {
+  openai?: boolean
+  anthropic?: boolean
+}
+
 // API Key Management Component
-export const APIKeySettings = ({ userId, onKeysUpdated }) => {
+export const APIKeySettings = ({ userId, onKeysUpdated }: APIKeySettingsProps) => {
   const [openaiKey, setOpenaiKey] = useState('')
   const [anthropicKey, setAnthropicKey] = useState('')
   const [showKeys, setShowKeys] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [keyStatus, setKeyStatus] = useState({})
+  const [keyStatus, setKeyStatus] = useState<KeyStatus>({})
 
   useEffect(() => {
     checkKeyStatus()
@@ -160,13 +170,17 @@ export const APIKeySettings = ({ userId, onKeysUpdated }) => {
 }
 
 // Enhanced Generation Form with API Key Options
-export const GenerationForm = ({ userId }) => {
+interface GenerationFormProps {
+  userId: string
+}
+
+export const GenerationForm = ({ userId }: GenerationFormProps) => {
   const [requirement, setRequirement] = useState('')
-  const [apiMode, setApiMode] = useState('auto') // auto, fallback, own_key, session_key
+  const [apiMode, setApiMode] = useState<string>('auto') // auto, fallback, own_key, session_key
   const [sessionKey, setSessionKey] = useState('')
   const [preferredModel, setPreferredModel] = useState('openai')
   const [generating, setGenerating] = useState(false)
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState<any>(null)
 
   const handleGenerate = async () => {
     setGenerating(true)
