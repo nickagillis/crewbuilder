@@ -89,6 +89,15 @@ from .monitoring_engineer import (
     create_monitoring_engineer
 )
 
+from .clarification_agent import (
+    ClarificationQuestion,
+    RefinedRequirements,
+    ClarificationSession,
+    create_clarification_agent,
+    analyze_initial_requirement,
+    create_clarification_session
+)
+
 __all__ = [
     # Data Models
     'BusinessRequirement',
@@ -130,6 +139,9 @@ __all__ = [
     'DashboardConfiguration',
     'PerformanceOptimization',
     'MonitoringPlan',
+    'ClarificationQuestion',
+    'RefinedRequirements',
+    'ClarificationSession',
     
     # Agents
     'RequirementsAnalyst',
@@ -144,6 +156,7 @@ __all__ = [
     'MonitoringEngineer',
     
     # Factory Functions
+    'create_clarification_agent',
     'create_requirements_analyst',
     'create_system_architect',
     'create_code_generator',
@@ -153,5 +166,7 @@ __all__ = [
     'create_infrastructure_analyst',
     'create_deployment_engineer',
     'create_hosting_assistant',
-    'create_monitoring_engineer'
+    'create_monitoring_engineer',
+    'analyze_initial_requirement',
+    'create_clarification_session'
 ]

@@ -21,8 +21,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-# Import all 10 CrewBuilder agents
+# Import all 11 CrewBuilder agents
 from agents import (
+    create_clarification_agent,
     create_requirements_analyst,
     create_system_architect, 
     create_code_generator,
@@ -32,7 +33,9 @@ from agents import (
     create_infrastructure_analyst,
     create_deployment_engineer,
     create_hosting_assistant,
-    create_monitoring_engineer
+    create_monitoring_engineer,
+    analyze_initial_requirement,
+    create_clarification_session
 )
 
 # Create FastAPI app
@@ -61,6 +64,7 @@ app.add_middleware(
 # Request/Response Models
 class GenerationRequest(BaseModel):
     requirement: str
+    skip_clarification: bool = False  # For cases where clarification was already done
 
 class GenerationResponse(BaseModel):
     success: bool
@@ -79,15 +83,37 @@ class DeploymentResponse(BaseModel):
     project_id: str = None
     error: str = None
 
+class ClarificationRequest(BaseModel):
+    requirement: str
+
+class ClarificationResponse(BaseModel):
+    success: bool
+    questions: List[Dict[str, Any]] = None
+    session_id: str = None
+    error: str = None
+
+class ClarificationAnswerRequest(BaseModel):
+    session_id: str
+    responses: Dict[str, str]
+
+class ClarificationAnswerResponse(BaseModel):
+    success: bool
+    refined_requirement: str = None
+    confidence_score: float = None
+    error: str = None
+
 # Global agent instances (initialized once for performance)
 agents = {}
 
 def initialize_agents():
-    """Initialize all 10 CrewBuilder agents"""
+    """Initialize all 11 CrewBuilder agents"""
     global agents
     
     try:
         print(" Initializing CrewBuilder agents...")
+        
+        agents['clarification_agent'] = create_clarification_agent()
+        print(" Clarification Agent ready")
         
         agents['requirements_analyst'] = create_requirements_analyst()
         print(" Requirements Analyst ready")
@@ -119,7 +145,7 @@ def initialize_agents():
         agents['monitoring_engineer'] = create_monitoring_engineer()
         print(" Monitoring Engineer ready")
         
-        print(" All 10 CrewBuilder agents initialized and ready!")
+        print(" All 11 CrewBuilder agents initialized and ready!")
         return True
         
     except Exception as e:
@@ -127,11 +153,11 @@ def initialize_agents():
         traceback.print_exc()
         return False
 
-def run_complete_pipeline(requirement: str) -> Dict[str, Any]:
+def run_complete_pipeline(requirement: str, skip_clarification: bool = False) -> Dict[str, Any]:
     """
-    Run the complete 10-agent CrewBuilder pipeline
+    Run the complete 11-agent CrewBuilder pipeline
     
-    Pipeline: Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
+    Pipeline: Clarification → Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
     """
     
     pipeline_results = {
@@ -211,6 +237,10 @@ def run_complete_pipeline(requirement: str) -> Dict[str, Any]:
         # Stage 3: Code Generation
         print(" Stage 3: Generating production code...")
         generated_code = agents['code_generator'].generate_crew_code(crew_architecture)
+        
+        # Store generated code in results
+        pipeline_results['generated_code'] = generated_code.main_code
+        pipeline_results['requirements_txt'] = generated_code.requirements_txt
         
         pipeline_results['pipeline_stages'].append({
             'stage': 'Code Generation',
@@ -412,7 +442,7 @@ async def root():
         "message": "CrewBuilder API - Building AI agents that build AI agent systems",
         "version": "1.0.0",
         "status": "operational",
-        "agents_ready": len(agents) == 10
+        "agents_ready": len(agents) == 11
     }
 
 @app.get("/")
@@ -426,6 +456,8 @@ def root():
         "endpoints": {
             "docs": "/docs",
             "health": "/health",
+            "clarify": "/api/clarify",
+            "clarify_answer": "/api/clarify/answer",
             "generate": "/api/generate",
             "deploy": "/api/deploy",
             "feedback": "/api/feedback"
@@ -444,6 +476,121 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
+# Global storage for clarification sessions (in production, use a database)
+clarification_sessions = {}
+
+@app.post("/api/clarify", response_model=ClarificationResponse)
+async def clarify_requirement(request: ClarificationRequest):
+    """
+    Start a clarification session for a requirement
+    
+    This endpoint analyzes the initial requirement and returns questions
+    to help clarify and refine what the user needs.
+    """
+    
+    try:
+        if not request.requirement or not request.requirement.strip():
+            raise HTTPException(status_code=400, detail="Valid requirement string is required")
+        
+        print(f"💬 Clarification request received: {request.requirement[:100]}...")
+        
+        # Check if agents are initialized
+        if 'clarification_agent' not in agents:
+            print(" Agents not initialized, initializing now...")
+            if not initialize_agents():
+                raise HTTPException(status_code=500, detail="Failed to initialize agents")
+        
+        # Generate clarification questions
+        questions = analyze_initial_requirement(
+            agents['clarification_agent'], 
+            request.requirement
+        )
+        
+        # Create session
+        session_id = f"clarify_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash(request.requirement) % 10000}"
+        
+        # Store session data
+        clarification_sessions[session_id] = {
+            "requirement": request.requirement,
+            "questions": questions,
+            "created_at": datetime.now().isoformat()
+        }
+        
+        # Convert questions to dict format for API response
+        questions_dict = [
+            {
+                "question": q.question,
+                "context": q.context,
+                "options": q.options,
+                "type": q.question_type
+            }
+            for q in questions
+        ]
+        
+        print(f"✅ Generated {len(questions)} clarification questions")
+        
+        return ClarificationResponse(
+            success=True,
+            questions=questions_dict,
+            session_id=session_id
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Clarification error: {e}")
+        traceback.print_exc()
+        
+        return ClarificationResponse(
+            success=False,
+            error=f"Clarification failed: {str(e)}"
+        )
+
+@app.post("/api/clarify/answer", response_model=ClarificationAnswerResponse)
+async def answer_clarification(request: ClarificationAnswerRequest):
+    """
+    Submit answers to clarification questions and get refined requirements
+    """
+    
+    try:
+        # Validate session
+        if request.session_id not in clarification_sessions:
+            raise HTTPException(status_code=404, detail="Invalid or expired session ID")
+        
+        session_data = clarification_sessions[request.session_id]
+        
+        print(f"📝 Processing clarification answers for session: {request.session_id}")
+        
+        # Create full clarification session
+        session = create_clarification_session(
+            agents['clarification_agent'],
+            session_data['requirement'],
+            request.responses
+        )
+        
+        # Store the refined requirements
+        session_data['refined_requirements'] = session.refined_requirements
+        session_data['confidence_score'] = session.confidence_score
+        
+        print(f"✅ Requirements refined with confidence: {session.confidence_score:.2f}")
+        
+        return ClarificationAnswerResponse(
+            success=True,
+            refined_requirement=session.refined_requirements.refined_requirement,
+            confidence_score=session.confidence_score
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Answer processing error: {e}")
+        traceback.print_exc()
+        
+        return ClarificationAnswerResponse(
+            success=False,
+            error=f"Failed to process answers: {str(e)}"
+        )
+
 @app.post("/api/generate", response_model=GenerationResponse)
 async def generate_system(request: GenerationRequest):
     """
@@ -460,13 +607,22 @@ async def generate_system(request: GenerationRequest):
         print(f" Generation request received: {request.requirement[:100]}...")
         
         # Check if agents are initialized
-        if len(agents) != 10:
+        if len(agents) != 11:
             print(" Agents not initialized, initializing now...")
             if not initialize_agents():
                 raise HTTPException(status_code=500, detail="Failed to initialize CrewBuilder agents")
         
+        # Check if this requirement was clarified
+        refined_requirement = request.requirement
+        for session_id, session_data in clarification_sessions.items():
+            if 'refined_requirements' in session_data:
+                if session_data['requirement'] == request.requirement:
+                    refined_requirement = session_data['refined_requirements'].refined_requirement
+                    print(f"🎯 Using refined requirement from session: {session_id}")
+                    break
+        
         # Run the complete pipeline
-        result = run_complete_pipeline(request.requirement)
+        result = run_complete_pipeline(refined_requirement, skip_clarification=request.skip_clarification)
         
         print(f" Generation completed successfully!")
         
@@ -528,6 +684,7 @@ async def deploy_system(request: DeploymentRequest):
         print(f"🚀 Deployment request received: {request.requirement[:100]}...")
         
         # Step 1: Generate the system using existing pipeline
+        print("📦 Step 1/3: Generating system code...")
         generation_result = await generate_system(GenerationRequest(requirement=request.requirement))
         
         if not generation_result.success:
@@ -536,6 +693,7 @@ async def deploy_system(request: DeploymentRequest):
         # Step 2: Deploy to Railway if requested
         if request.deploy_to_railway:
             try:
+                print("🚂 Step 2/3: Initiating Railway deployment...")
                 from deployment.railway_deployer import RailwayDeploymentManager
                 
                 deployment_manager = RailwayDeploymentManager()
@@ -544,6 +702,8 @@ async def deploy_system(request: DeploymentRequest):
                 user_id = f"user_{hash(request.requirement)}"[:10]
                 
                 # Deploy the generated system
+                print(f"🔧 Creating deployment for user: {user_id}")
+                print("📤 Step 3/3: Deploying to Railway infrastructure...")
                 deployment = deployment_manager.create_deployment(
                     user_id=user_id,
                     generated_system={
@@ -564,11 +724,16 @@ async def deploy_system(request: DeploymentRequest):
                         project_id=deployment['project_id']
                     )
                 else:
-                    raise Exception(f"Deployment failed: {deployment.get('error', 'Unknown error')}")
+                    error_msg = deployment.get('error', 'Unknown error')
+                    error_type = deployment.get('error_type', 'UnknownError')
+                    print(f"❌ Deployment failed at step 3: {error_type} - {error_msg}")
+                    raise Exception(f"Deployment failed: {error_msg}")
                     
             except ImportError:
+                print("❌ ImportError: Railway deployment module not available")
                 raise HTTPException(status_code=501, detail="Railway deployment not configured. Please set RAILWAY_TOKEN.")
             except Exception as e:
+                print(f"❌ Deployment error: {type(e).__name__} - {str(e)}")
                 raise HTTPException(status_code=500, detail=f"Deployment failed: {str(e)}")
         
         # If not deploying, just return the generated code info

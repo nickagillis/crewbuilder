@@ -46,6 +46,8 @@ class RailwayDeployer:
             Deployment info including URLs and status
         """
         
+        print(f"\n🚀 Starting Railway deployment for: {project_name}")
+        
         try:
             # Create temporary directory for deployment
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -58,16 +60,24 @@ class RailwayDeployer:
                 self._init_git_repo(temp_path)
                 
                 # Create Railway project
+                print("📦 Creating Railway project...")
                 project_id = self._create_railway_project(project_name)
+                print(f"✅ Project created: {project_id}")
                 
                 # Deploy to Railway
+                print("🚂 Deploying code to Railway...")
                 deployment_info = self._deploy_to_railway(temp_path, project_id)
+                print(f"✅ Deployment initiated: {deployment_info['deployment_id']}")
                 
                 # Set environment variables
+                print("🔐 Setting environment variables...")
                 self._set_environment_variables(project_id, user_api_keys)
+                print("✅ Environment variables configured")
                 
                 # Get deployment URL
+                print("🌐 Retrieving deployment URL...")
                 deployment_url = self._get_deployment_url(project_id)
+                print(f"✅ Deployment URL: {deployment_url}")
                 
                 return {
                     "success": True,
@@ -81,6 +91,7 @@ class RailwayDeployer:
                 }
                 
         except Exception as e:
+            print(f"❌ Railway deployment failed: {type(e).__name__} - {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
@@ -174,14 +185,26 @@ def health_check():
     def _deploy_to_railway(self, path: Path, project_id: str) -> Dict[str, str]:
         """Deploy code to Railway project"""
         
-        # Railway CLI would be ideal here, but for direct API:
-        # This is simplified - in production you'd use Railway CLI or their GitHub integration
-        
-        # For now, return placeholder - real implementation would push to Railway's git
-        return {
-            "deployment_id": str(uuid.uuid4()),
-            "status": "deploying"
-        }
+        try:
+            # Create a service in the project
+            service_id = self._create_service(project_id)
+            
+            # Create deployment from directory
+            deployment_id = self._create_deployment_from_directory(
+                project_id=project_id,
+                service_id=service_id,
+                directory_path=path
+            )
+            
+            return {
+                "deployment_id": deployment_id,
+                "service_id": service_id,
+                "status": "deploying"
+            }
+            
+        except Exception as e:
+            print(f"Railway deployment error: {e}")
+            raise Exception(f"Failed to deploy to Railway: {str(e)}")
     
     def _set_environment_variables(self, project_id: str, env_vars: Dict[str, str]):
         """Set environment variables in Railway project"""
@@ -212,11 +235,135 @@ def health_check():
         if response.status_code != 200:
             raise Exception(f"Failed to set environment variables: {response.text}")
     
+    def _create_service(self, project_id: str) -> str:
+        """Create a new service in the Railway project"""
+        
+        mutation = """
+        mutation CreateService($projectId: String!) {
+            serviceCreate(input: { projectId: $projectId }) {
+                id
+            }
+        }
+        """
+        
+        response = requests.post(
+            self.api_base,
+            headers=self.headers,
+            json={
+                "query": mutation,
+                "variables": {"projectId": project_id}
+            }
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"Failed to create service: {response.text}")
+        
+        data = response.json()
+        if 'errors' in data:
+            raise Exception(f"GraphQL error: {data['errors']}")
+            
+        return data['data']['serviceCreate']['id']
+    
+    def _create_deployment_from_directory(self, project_id: str, service_id: str, directory_path: Path) -> str:
+        """Create a deployment from a local directory"""
+        
+        # Railway expects a tarball of the directory
+        import tarfile
+        import io
+        import base64
+        
+        # Create in-memory tarball
+        tar_buffer = io.BytesIO()
+        with tarfile.open(fileobj=tar_buffer, mode='w:gz') as tar:
+            for file_path in directory_path.rglob('*'):
+                if file_path.is_file():
+                    arcname = str(file_path.relative_to(directory_path))
+                    tar.add(str(file_path), arcname=arcname)
+        
+        tar_buffer.seek(0)
+        tar_content = tar_buffer.read()
+        
+        # Upload the deployment
+        mutation = """
+        mutation CreateDeployment($serviceId: String!, $source: DeploymentSourceInput!) {
+            deploymentCreate(input: {
+                serviceId: $serviceId,
+                source: $source
+            }) {
+                id
+                status
+            }
+        }
+        """
+        
+        response = requests.post(
+            self.api_base,
+            headers=self.headers,
+            json={
+                "query": mutation,
+                "variables": {
+                    "serviceId": service_id,
+                    "source": {
+                        "type": "TARBALL",
+                        "tarball": base64.b64encode(tar_content).decode('utf-8')
+                    }
+                }
+            }
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"Failed to create deployment: {response.text}")
+        
+        data = response.json()
+        if 'errors' in data:
+            raise Exception(f"GraphQL error: {data['errors']}")
+            
+        return data['data']['deploymentCreate']['id']
+    
     def _get_deployment_url(self, project_id: str) -> str:
         """Get the deployment URL for the project"""
         
-        # Railway generates URLs in format: projectname.up.railway.app
-        # This would come from the API in production
+        # Query for the service domain
+        query = """
+        query GetProjectDomains($projectId: String!) {
+            project(id: $projectId) {
+                services {
+                    edges {
+                        node {
+                            id
+                            domains {
+                                serviceDomains {
+                                    domain
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """
+        
+        response = requests.post(
+            self.api_base,
+            headers=self.headers,
+            json={
+                "query": query,
+                "variables": {"projectId": project_id}
+            }
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            try:
+                services = data['data']['project']['services']['edges']
+                if services and len(services) > 0:
+                    domains = services[0]['node']['domains']['serviceDomains']
+                    if domains and len(domains) > 0:
+                        return f"https://{domains[0]['domain']}"
+            except (KeyError, IndexError):
+                pass
+        
+        # Fallback to generated URL
         return f"https://crewai-{project_id[:8]}.up.railway.app"
 
 
@@ -224,7 +371,18 @@ class RailwayDeploymentManager:
     """Manages Railway deployments for CrewBuilder users"""
     
     def __init__(self):
-        self.deployer = RailwayDeployer()
+        # Use shared Railway project deployment
+        try:
+            from .shared_railway_deployer import SharedRailwayDeployer
+            self.deployer = SharedRailwayDeployer()
+            self.use_shared = True
+            print("🏭 Using shared Railway project for client deployments")
+        except Exception as e:
+            print(f"⚠️  Shared deployment not available: {e}")
+            # Fallback to individual project deployment
+            self.deployer = RailwayDeployer()
+            self.use_shared = False
+            
         self.deployments_file = Path("deployments.json")
         self.deployments = self._load_deployments()
     
@@ -244,16 +402,50 @@ class RailwayDeploymentManager:
         # Generate project name
         project_name = f"crewai-{user_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         
-        # Deploy to Railway
-        deployment = self.deployer.deploy_crewai_system(
-            generated_code={
-                'main.py': generated_system['code'],
-                'requirements.txt': generated_system['requirements']
-            },
-            project_name=project_name,
-            user_api_keys=api_keys,
-            requirements=generated_system['original_requirements']
+        # Prepare generated code
+        generated_code = {
+            'main.py': generated_system.get('code', ''),
+            'requirements.txt': generated_system.get('requirements', '')
+        }
+        
+        # Generate client dashboard
+        from agents.dashboard_generator import generate_client_dashboard
+        dashboard_code = generate_client_dashboard(
+            client_name=project_name,
+            agent_system_info={
+                'requirements': generated_system.get('original_requirements', ''),
+                'agents': []  # TODO: Extract agent info from generated code
+            }
         )
+        
+        # Convert dashboard code to dict format
+        dashboard_files = {
+            'app.py': dashboard_code.app_py,
+            'requirements.txt': dashboard_code.requirements_txt,
+            'templates/index.html': dashboard_code.templates_index,
+            'templates/setup.html': dashboard_code.templates_setup,
+            'templates/status.html': dashboard_code.templates_status,
+            'static/style.css': dashboard_code.static_style_css
+        }
+        
+        # Deploy using appropriate method
+        if self.use_shared and hasattr(self.deployer, 'deploy_client_system'):
+            # Use shared Railway project deployment
+            deployment = self.deployer.deploy_client_system(
+                client_id=user_id,
+                generated_code=generated_code,
+                dashboard_code=dashboard_files,
+                client_name=project_name,
+                api_keys=api_keys
+            )
+        else:
+            # Use individual project deployment
+            deployment = self.deployer.deploy_crewai_system(
+                generated_code=generated_code,
+                project_name=project_name,
+                user_api_keys=api_keys,
+                requirements=generated_system.get('original_requirements', '')
+            )
         
         # Store deployment info
         if deployment['success']:
