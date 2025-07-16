@@ -8,8 +8,8 @@
 - **Health**: https://web-production-bd955.up.railway.app/health
 
 ### Frontend (Vercel)
-- **URL**: [To be added - awaiting from user]
-- **Status**: Deployed successfully
+- **URL**: https://crewbuilder.vercel.app
+- **Status**: Deployed successfully ✅
 
 ## Environment Variables Needed
 
