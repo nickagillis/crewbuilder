@@ -1,276 +1,149 @@
-# Basic Memory GitHub Sync Solution
+# CrewBuilder - AI-Powered Multi-Agent System Generator
 
-This project provides automated synchronization between Basic Memory projects and GitHub repositories using MCP (Model Context Protocol) tools.
+## 🚀 Overview
+CrewBuilder is a complete meta-system with **10 specialized AI agents** that generates production-ready AI agent teams. Input your business requirements through the beautiful web interface, and CrewBuilder will create a complete AI system using the CrewAI framework.
 
-## The Problem
+## ✅ Current Status - Ready to Use!
+- **Backend**: Complete FastAPI server with all 10 agents operational
+- **Frontend**: Professional Next.js web interface 
+- **Pipeline**: Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
+- **Integration**: Frontend connects to backend API for real-time generation
 
-Basic Memory stores knowledge locally in Markdown files, but there's no built-in way to automatically sync these files to GitHub when they're created or updated. This creates a gap where:
+## 🏃‍♂️ Quick Start
 
-- Basic Memory creates/updates files locally
-- Users have to manually commit and push changes to GitHub
-- Knowledge can get out of sync between local and cloud storage
-- Team collaboration becomes difficult
-
-## The Solution
-
-This sync solution bridges Basic Memory and GitHub by:
-
-1. **Monitoring Basic Memory projects** for file changes
-2. **Reading file contents** using Basic Memory MCP tools 
-3. **Automatically pushing changes** to GitHub using GitHub MCP tools
-4. **Maintaining project structure** across local and remote repositories
-
-## Features
-
-- ✅ **Automatic sync** from Basic Memory to GitHub
-- ✅ **Multi-project support** - sync different Basic Memory projects to different GitHub repos/paths
-- ✅ **Configurable sync intervals** and batch sizes
-- ✅ **Dry-run mode** to test without making changes
-- ✅ **File filtering** to exclude temporary files
-- ✅ **MCP integration** leveraging existing Claude Desktop tools
-- ✅ **Cross-platform** Python solution
-
-## Quick Start
-
-### 1. Install Dependencies
-
+### 1. Start the Backend Server
 ```bash
-pip install -r requirements.txt
+# Using Python (Windows)
+py api_server.py
+
+# Using Python (Mac/Linux)
+python api_server.py
 ```
+The API server will start on http://localhost:8000
 
-### 2. Configure Your Projects
-
-Edit `sync_config.ini` to match your setup:
-
-```ini
-[main]
-local_path = C:\Users\nicka\dev\knowledge\main
-github_repo = nickagillis/dev-knowledge-base
-github_path = main
-sync_enabled = true
-```
-
-### 3. Test the Sync (Dry Run)
-
+### 2. Start the Frontend
 ```bash
-python basic_memory_sync.py --sync-all --dry-run
+cd web
+npm install  # First time only
+npm run dev
+```
+The web interface will be available at http://localhost:3000
+
+### 3. Generate Your First AI System
+1. Open http://localhost:3000 in your browser
+2. Enter your business requirements (e.g., "I need to automate content creation for my blog")
+3. Click "Generate System"
+4. Watch the 10-agent pipeline create your custom AI system!
+
+## 🤖 The 10-Agent Pipeline
+
+1. **Requirements Analyst** - Analyzes your business needs
+2. **System Architect** - Designs the AI agent architecture
+3. **Code Generator** - Creates production-ready Python code
+4. **Quality Assurance** - Validates and tests the generated code
+5. **API Detective** - Identifies and configures required APIs
+6. **Documentation Specialist** - Creates comprehensive documentation
+7. **Infrastructure Analyst** - Recommends hosting platforms
+8. **Deployment Engineer** - Generates deployment configurations
+9. **Hosting Assistant** - Provides setup guidance
+10. **Monitoring Engineer** - Sets up monitoring and alerts
+
+## 📁 Project Structure
+```
+crewbuilder/
+├── agents/              # All 10 AI agents
+├── web/                 # Next.js frontend
+├── api_server.py        # FastAPI backend
+├── requirements.txt     # Python dependencies
+├── CONSOLIDATED_STRATEGY.md  # Project roadmap
+└── PROGRESS.md         # Development history
 ```
 
-### 4. Sync a Single Project
+## 🛠️ Requirements
 
-```bash
-python basic_memory_sync.py --project main
+- Python 3.8+
+- Node.js 18+
+- OpenAI API key (or other LLM provider)
+
+## 📝 Configuration
+
+Create a `.env` file in the root directory:
+```env
+OPENAI_API_KEY=your_api_key_here
 ```
 
-### 5. Start Continuous Monitoring
+## 🚀 What You Get
 
-```bash
-python basic_memory_sync.py --monitor
-```
+When you input your business requirements, CrewBuilder generates:
 
-## Configuration
+1. **Complete Python Code** - Ready-to-run CrewAI implementation
+2. **Requirements & Setup** - All dependencies and configuration
+3. **API Integration Plans** - With cost estimates and setup guides
+4. **Documentation** - User guides and technical documentation
+5. **Deployment Scripts** - Docker, Kubernetes, CI/CD pipelines
+6. **Infrastructure Plans** - Platform recommendations with costs
+7. **Monitoring Setup** - Dashboards, alerts, and observability
 
-### Project Configuration
+## 🎯 Example Use Cases
 
-Each Basic Memory project can be configured in `sync_config.ini`:
+- **Content Automation**: Blog writing, social media management
+- **Sales Automation**: Lead qualification, CRM integration
+- **Data Analysis**: Report generation, insights extraction
+- **Customer Support**: Ticket routing, response automation
+- **DevOps Automation**: Deployment pipelines, monitoring
 
-- `local_path`: Path to Basic Memory project files
-- `github_repo`: Target GitHub repository (owner/repo)
-- `github_path`: Subdirectory in GitHub repo (optional)
-- `sync_enabled`: Enable/disable sync for this project
+## 🔧 Development
 
-### Sync Settings
+To contribute or modify CrewBuilder:
 
-- `check_interval_seconds`: How often to check for changes (default: 300)
-- `batch_size`: Maximum files to sync per run (default: 10)
-- `commit_message_template`: Template for commit messages
-- `exclude_patterns`: File patterns to ignore (comma-separated)
-- `dry_run`: Test mode - show what would be synced without doing it
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Install frontend dependencies: `cd web && npm install`
+4. Run tests: `py test_fastapi_integration.py`
+5. Make your changes and submit a PR
 
-## Usage Examples
+## 📊 Status & Roadmap
 
-### Sync All Projects
-```bash
-# Dry run to see what would be synced
-python basic_memory_sync.py --sync-all --dry-run
+### ✅ Completed
+- All 10 agents implemented and tested
+- Professional web interface
+- FastAPI backend with full pipeline
+- Frontend-backend integration
+- Documentation and examples
 
-# Actually sync all projects
-python basic_memory_sync.py --sync-all
-```
+### 🔄 In Progress
+- Real-world testing with business users
+- Performance optimization
+- Cost analysis for API usage
 
-### Sync Specific Project
-```bash
-python basic_memory_sync.py --project main
-```
+### 📅 Future Plans
+- One-click deployment to cloud platforms
+- User feedback and learning system
+- Enterprise features and authentication
+- Multi-language support
 
-### Continuous Monitoring
-```bash
-# Monitor with default interval (5 minutes)
-python basic_memory_sync.py --monitor
+## 🤝 Contributing
 
-# Monitor with custom interval (1 minute)
-python basic_memory_sync.py --monitor --interval 60
-```
+CrewBuilder is open for contributions! Areas where help is needed:
 
-### Custom Configuration
-```bash
-python basic_memory_sync.py --config my_config.ini --sync-all
-```
+- Testing with real business scenarios
+- UI/UX improvements
+- Additional deployment platform support
+- Documentation and tutorials
+- Performance optimization
 
-## Integration with Claude Desktop
+## 📄 License
 
-This solution is designed to work alongside your existing Claude Desktop MCP setup:
+MIT License - See LICENSE file for details
 
-1. **Basic Memory MCP** - Already configured for knowledge management
-2. **GitHub MCP** - Already configured for repository access
-3. **This Sync Tool** - Bridges the two automatically
+## 🙏 Acknowledgments
 
-### Required MCP Tools
-
-Ensure you have these MCP servers configured in Claude Desktop:
-
-```json
-{
-  "mcpServers": {
-    "basic-memory": {
-      "command": "uvx",
-      "args": ["basic-memory", "mcp"]
-    },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "your_token_here"
-      }
-    }
-  }
-}
-```
-
-## Workflow
-
-### Automatic Sync Workflow
-
-1. **File Change Detection**
-   - Monitor Basic Memory project directories
-   - Detect .md files modified recently
-   - Filter out excluded file patterns
-
-2. **Content Reading**
-   - Read file contents from local filesystem
-   - Maintain Basic Memory frontmatter and formatting
-
-3. **GitHub Sync**
-   - Create or update files in GitHub repository
-   - Use meaningful commit messages with timestamps
-   - Respect repository structure and paths
-
-4. **Error Handling**
-   - Log sync failures and retry logic
-   - Skip problematic files and continue
-   - Report sync statistics
-
-### Manual Sync Options
-
-- Sync individual projects on demand
-- Dry-run mode for testing
-- Force sync all files (not just recent changes)
-
-## File Structure
-
-```
-basic-memory-sync/
-├── basic_memory_sync.py      # Main sync script
-├── sync_config.ini           # Configuration file
-├── requirements.txt          # Python dependencies
-├── README.md                 # This documentation
-└── examples/
-    ├── claude_integration.py # Claude MCP integration examples
-    └── monitoring_setup.py   # System monitoring setup
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**"No recent changes found"**
-- Check that the local_path exists and contains .md files
-- Verify file modification times are recent enough
-- Try increasing the time window or forcing a full sync
-
-**"GitHub authentication failed"**
-- Verify your GitHub Personal Access Token is set correctly
-- Check token permissions include repository access
-- Test GitHub MCP tools separately in Claude Desktop
-
-**"MCP tools not available"**
-- Ensure Claude Desktop is running with MCP servers configured
-- Test Basic Memory and GitHub tools individually
-- Check Claude Desktop configuration file syntax
-
-### Debug Mode
-
-Run with verbose output to diagnose issues:
-
-```bash
-python basic_memory_sync.py --sync-all --dry-run --verbose
-```
-
-## Advanced Usage
-
-### Custom Sync Strategies
-
-You can extend the sync script to support:
-
-- **Selective sync**: Only sync files with specific tags
-- **Conditional sync**: Sync based on file content or metadata
-- **Multi-repo sync**: Send different projects to different repositories
-- **Branch-specific sync**: Sync to feature branches instead of main
-
-### Integration with CI/CD
-
-Set up automatic sync as part of your development workflow:
-
-```yaml
-# GitHub Action example
-name: Basic Memory Sync
-on:
-  schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
-  workflow_dispatch:
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run Basic Memory Sync
-        run: python basic_memory_sync.py --sync-all
-```
-
-## Contributing
-
-This sync solution is designed to be extensible:
-
-1. **Fork the repository**
-2. **Add new features** (e.g., different version control systems)
-3. **Submit pull requests** with improvements
-4. **Report issues** and suggest enhancements
-
-## License
-
-This project is open source. Use and modify as needed for your Basic Memory workflows.
+Built with:
+- [CrewAI](https://github.com/joaomdmoura/crewAI) - AI agent framework
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python API framework
+- [Next.js](https://nextjs.org/) - React framework for the frontend
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
 
 ---
 
-## Next Steps
-
-Once you have this basic sync working:
-
-1. **Test with your actual Basic Memory projects**
-2. **Integrate with actual MCP tools** (currently uses filesystem simulation)
-3. **Set up monitoring and alerting** for sync failures
-4. **Expand to support additional repositories** or sync targets
-5. **Create automated deployment** for team use
-
-The goal is to make Basic Memory -> GitHub sync completely transparent, so you can focus on building knowledge while everything stays automatically backed up and synchronized.
+**Ready to build your AI agent system?** Start the servers and visit http://localhost:3000!
