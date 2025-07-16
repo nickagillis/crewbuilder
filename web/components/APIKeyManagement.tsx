@@ -189,7 +189,7 @@ export const GenerationForm = ({ userId }: GenerationFormProps) => {
     setResult(null)
 
     try {
-      const requestBody = {
+      const requestBody: any = {
         requirement,
         preferred_model: apiMode === 'fallback' ? 'fallback' : preferredModel
       }
