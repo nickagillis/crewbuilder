@@ -802,22 +802,62 @@ async def deploy_system(request: DeploymentRequest):
 @app.on_event("startup")
 async def startup_event():
     """Initialize all agents when the server starts"""
-    print(" CrewBuilder API Server starting...")
-    print(f" Python version: {sys.version}")
-    print(f" Working directory: {Path.cwd()}")
+    print("\n=== CrewBuilder API Server Starting ===")
+    print(f"Python version: {sys.version}")
+    print(f"Working directory: {Path.cwd()}")
     
-    # Test imports
+    # Check environment variables
+    print("\nEnvironment Check:")
+    print(f"  OPENAI_API_KEY: {'✓ Present' if os.getenv('OPENAI_API_KEY') else '✗ Missing'}")
+    print(f"  ANTHROPIC_API_KEY: {'✓ Present' if os.getenv('ANTHROPIC_API_KEY') else '✗ Missing (optional)'}")
+    print(f"  RAILWAY_TOKEN: {'✓ Present' if os.getenv('RAILWAY_TOKEN') else '✗ Missing'}")
+    print(f"  PORT: {os.getenv('PORT', 'Not set (will use 8000)')}")
+    
+    # Test critical imports
+    print("\nTesting imports:")
+    critical_modules = {
+        'crewai': True,  # Required
+        'openai': True,  # Required
+        'pydantic': True,  # Required
+        'fastapi': True,  # Required
+        'langchain': False,  # Optional
+        'anthropic': False  # Optional
+    }
+    
+    import_errors = []
+    for module_name, required in critical_modules.items():
+        try:
+            module = __import__(module_name)
+            version = getattr(module, '__version__', 'unknown')
+            print(f"  {module_name}: ✓ {version}")
+        except ImportError as e:
+            if required:
+                import_errors.append(f"{module_name}: {e}")
+                print(f"  {module_name}: ✗ ERROR - {e}")
+            else:
+                print(f"  {module_name}: ✗ Not installed (optional)")
+    
+    if import_errors:
+        print(f"\n✗ CRITICAL: Required modules missing! This will cause crashes.")
+        print("  Install with: pip install -r requirements.txt")
+        for error in import_errors:
+            print(f"  - {error}")
+    
+    # Initialize agents with detailed error handling
+    print("\nInitializing agents:")
     try:
-        import crewai
-        print(f" CrewAI version: {crewai.__version__ if hasattr(crewai, '__version__') else 'Unknown'}")
-    except ImportError as e:
-        print(f" ERROR: Could not import crewai: {e}")
+        success = initialize_agents()
+        if success:
+            print(f"\n✓ CrewBuilder API ready! Initialized {len(agents)} agents.")
+        else:
+            print("\n✗ Warning: Some agents failed to initialize")
+    except Exception as e:
+        print(f"\n✗ ERROR during agent initialization: {e}")
+        import traceback
+        traceback.print_exc()
+        print("\nThis error is likely causing the Railway crash!")
     
-    success = initialize_agents()
-    if success:
-        print(" CrewBuilder API ready for business!")
-    else:
-        print(" Failed to initialize some agents")
+    print("=== Startup Complete ===\n")
 
 if __name__ == "__main__":
     import uvicorn

@@ -4,6 +4,10 @@
 # Core CrewAI framework
 crewai==0.141.0
 
+# AI/LLM dependencies
+openai>=1.0.0
+langchain>=0.0.200
+
 # FastAPI for web API server
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
