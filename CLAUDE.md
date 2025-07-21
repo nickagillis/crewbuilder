@@ -22,16 +22,23 @@ CrewBuilder is an AI-powered meta-system that generates complete, production-rea
 ## Current Status (Last Updated: 2025-07-21)
 
 ### What's Actually Working
-- **Core Agents**: ✅ 11 agents exist but Clarification Agent has hardcoded responses
+- **Backend (Railway)**: ✅ Running and accessible with env vars shared
 - **Frontend (Vercel)**: ✅ Live at https://crewbuilder.vercel.app
-- **Basic UI**: ✅ Can input requirements and see generated code
+- **Basic UI**: ✅ Can input requirements and see results
+- **Agents Initialize**: ✅ All 11 agents start up successfully
 
 ### What's Not Working
-- **Backend (Railway)**: ✅ Fixed! Now running with all agents
-- **Clarification Agent**: ❌ Not integrated into main flow - frontend skips it entirely
-- **File Download**: ❌ Shows alert instead of downloading files  
-- **Deployment**: ❌ Never tested with real Railway deployment
-- **Agent Count Display**: ❌ Shows "0 AI Agents" in results
+- **CrewAI LLM Connection**: ❌ "LLM Failed" error - agents can't use OpenAI
+- **Clarification Flow**: ❌ Frontend skips clarification, goes straight to generate
+- **Agent Count Display**: ❌ Shows "0 AI Agents" (parsing issue)
+- **File Download**: ❌ Completely fake - just shows alert
+- **Actual AI Generation**: ❌ Using fallback templates, not real AI
+
+### Key Issues Found
+- **CrewAI Configuration**: Despite OPENAI_API_KEY being set, CrewAI can't connect
+- **No Agent Orchestration**: Agents run sequentially, not as a crew
+- **Frontend Integration**: Missing clarification flow, fake downloads
+- **Fallback Everything**: System uses templates when AI fails
 
 ### What's Completely Missing
 - **Database**: ❌ No user tracking, system history, or persistence
@@ -207,11 +214,17 @@ NEXT_PUBLIC_API_URL=https://web-production-bd955.up.railway.app
 - **Testing backend**: Use `test_api.py` script for direct API testing
 
 ## Next Session Priorities
-1. **Fix Railway deployment crash** - Check logs for startup errors
-2. Debug why Railway crashes after successful build
-3. Test full pipeline with video content generation requirement
-4. Validate Clarification Agent works in production
-5. Test client system deployment once backend is stable
+1. **Fix CrewAI LLM Connection** - Debug why "LLM Failed" despite API key
+2. **Integrate Clarification Flow** - Frontend needs to call /api/clarify first
+3. **Remove All Fallbacks** - Force real AI or fail
+4. **Implement Real Downloads** - Package generated code as zip
+5. **Create Proper Crew** - Orchestrate agents instead of sequential calls
+
+## Debugging Notes
+- OPENAI_API_KEY is set and accessible in Railway
+- CrewAI version 0.141.0 might have issues
+- Tried multiple config approaches, all fail with "LLM Failed"
+- Need to check CrewAI GitHub issues or try different version
 
 ### Test Case Ready
 User requirement for testing:
