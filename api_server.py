@@ -137,10 +137,19 @@ def initialize_agents():
         print(" Initializing CrewBuilder agents...")
         
         # Check if we have OpenAI API key
-        if not os.getenv('OPENAI_API_KEY'):
+        openai_key = os.getenv('OPENAI_API_KEY')
+        if not openai_key:
             print(" ERROR: OPENAI_API_KEY not found!")
+            print(" Available environment variables:")
+            for key in sorted(os.environ.keys()):
+                if 'KEY' in key.upper() or 'TOKEN' in key.upper():
+                    print(f"   {key}: ***hidden***")
+                else:
+                    print(f"   {key}: {os.environ[key][:30]}..." if len(os.environ[key]) > 30 else f"   {key}: {os.environ[key]}")
             print(" Agents will use fallback mode and won't generate real content")
             return False
+        else:
+            print(f" ✓ OPENAI_API_KEY found: {openai_key[:10]}...")  # Show first 10 chars
         
         if CLARIFICATION_AVAILABLE:
             try:
@@ -652,7 +661,10 @@ async def generate_system(request: GenerationRequest):
         if len(agents) < 10:
             print(" Agents not initialized, initializing now...")
             if not initialize_agents():
-                raise HTTPException(status_code=500, detail="Failed to initialize CrewBuilder agents")
+                raise HTTPException(
+                    status_code=503, 
+                    detail="CrewBuilder agents require OPENAI_API_KEY to function. Please ensure the API key is set in Railway environment variables."
+                )
         
         # Check if this requirement was clarified
         refined_requirement = request.requirement
