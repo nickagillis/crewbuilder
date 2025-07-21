@@ -5,6 +5,7 @@ Connects the beautiful Next.js frontend to the complete 10-agent backend
 """
 
 import sys
+import os
 from pathlib import Path
 from typing import Dict, Any, List
 import json
