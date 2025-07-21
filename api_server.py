@@ -16,10 +16,8 @@ from datetime import datetime
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# Ensure OpenAI key is available for CrewAI/LangChain
-if os.getenv('OPENAI_API_KEY'):
-    # Set it for langchain to find
-    os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+# Configure CrewAI to use OpenAI
+import crewai_config  # This sets up CrewAI with the right LLM
 
 # FastAPI imports
 from fastapi import FastAPI, HTTPException

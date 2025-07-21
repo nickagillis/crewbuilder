@@ -48,9 +48,7 @@ class RequirementsAnalyst:
     """
     
     def __init__(self):
-        # Get configured LLM
-        llm = get_configured_llm(temperature=0.7)
-        
+        # For now, skip LLM config until we fix the issue
         self.agent = Agent(
             role='Requirements Analyst',
             goal='Transform user business needs into structured technical requirements with intelligent agent architecture recommendations',
@@ -65,8 +63,7 @@ class RequirementsAnalyst:
             
             You think systematically about how to break complex business workflows into coordinated agent teams.""",
             verbose=True,
-            allow_delegation=False,
-            llm=llm  # Use configured LLM
+            allow_delegation=False
         )
     
     def analyze_requirements(self, user_input: str) -> TechnicalSpecification:
