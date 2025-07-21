@@ -11,6 +11,18 @@ os.environ['OPENAI_MODEL_NAME'] = 'gpt-4o-mini'  # Use the mini model for cost e
 os.environ['OPENAI_API_BASE'] = 'https://api.openai.com/v1'
 os.environ['OPENAI_API_TYPE'] = 'openai'
 
+# Force IPv4 for OpenAI (Railway might default to IPv6)
+import socket
+original_getaddrinfo = socket.getaddrinfo
+
+def forced_ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """Force IPv4 for OpenAI API calls"""
+    if host in ['api.openai.com', 'openai.com']:
+        family = socket.AF_INET  # Force IPv4
+    return original_getaddrinfo(host, port, family, type, proto, flags)
+
+socket.getaddrinfo = forced_ipv4_getaddrinfo
+
 # Ensure the API key is set
 if not os.getenv('OPENAI_API_KEY'):
     print("WARNING: OPENAI_API_KEY not found in environment!")
