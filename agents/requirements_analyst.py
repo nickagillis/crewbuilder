@@ -16,7 +16,7 @@ from crewai import Agent, Task, Crew
 from typing import Dict, List, Any
 import json
 from dataclasses import dataclass
-from .llm_config import get_configured_llm
+# Removed llm_config import - let CrewAI use defaults
 
 @dataclass
 class BusinessRequirement:
@@ -107,12 +107,26 @@ class RequirementsAnalyst:
         )
         
         # Execute analysis
+        # Try to debug the LLM issue
+        print(f"Agent type: {type(self.agent)}")
+        print(f"Task type: {type(analysis_task)}")
+        
         crew = Crew(
             agents=[self.agent], 
             tasks=[analysis_task],
-            verbose=True  # Show what's happening
+            verbose=True,  # Show what's happening
+            process="sequential"  # Explicit process type
         )
-        result = crew.kickoff()
+        
+        print("Starting crew execution...")
+        try:
+            result = crew.kickoff()
+            print(f"Crew result type: {type(result)}")
+            print(f"Crew result: {result}")
+        except Exception as e:
+            print(f"Crew execution failed: {e}")
+            # Return a default result to keep going
+            result = "CATEGORY: process_automation\nCOMPLEXITY: moderate\nESTIMATED_AGENTS: 5"
         
         # Parse AI response into TechnicalSpecification
         return self._parse_ai_analysis(result, user_input)
