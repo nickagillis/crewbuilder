@@ -16,6 +16,7 @@ from crewai import Agent, Task, Crew
 from typing import Dict, List, Any
 import json
 from dataclasses import dataclass
+from .llm_config import get_configured_llm
 
 @dataclass
 class BusinessRequirement:
@@ -47,6 +48,9 @@ class RequirementsAnalyst:
     """
     
     def __init__(self):
+        # Get configured LLM
+        llm = get_configured_llm(temperature=0.7)
+        
         self.agent = Agent(
             role='Requirements Analyst',
             goal='Transform user business needs into structured technical requirements with intelligent agent architecture recommendations',
@@ -61,7 +65,8 @@ class RequirementsAnalyst:
             
             You think systematically about how to break complex business workflows into coordinated agent teams.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Use configured LLM
         )
     
     def analyze_requirements(self, user_input: str) -> TechnicalSpecification:
@@ -105,7 +110,11 @@ class RequirementsAnalyst:
         )
         
         # Execute analysis
-        crew = Crew(agents=[self.agent], tasks=[analysis_task])
+        crew = Crew(
+            agents=[self.agent], 
+            tasks=[analysis_task],
+            verbose=True  # Show what's happening
+        )
         result = crew.kickoff()
         
         # Parse AI response into TechnicalSpecification
@@ -144,13 +153,9 @@ class RequirementsAnalyst:
                     apis_required = [api.strip() for api in apis_text.split(',') if api.strip()]
         
         except Exception as e:
-            print(f"Warning: Could not fully parse AI analysis, using defaults: {e}")
-        
-        # Fallback to simplified analysis if parsing fails
-        if not agent_roles:
-            agent_roles = self._fallback_agent_roles(category)
-        if not workflow_steps:
-            workflow_steps = self._fallback_workflow_steps(category)
+            print(f"ERROR: Could not parse AI analysis: {e}")
+            print(f"Raw AI result: {ai_result[:500]}...")  # Show what we got
+            raise ValueError(f"AI analysis failed - check OpenAI API key and configuration")
         
         # Create business requirement
         business_req = BusinessRequirement(

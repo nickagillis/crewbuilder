@@ -16,6 +16,11 @@ from datetime import datetime
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+# Ensure OpenAI key is available for CrewAI/LangChain
+if os.getenv('OPENAI_API_KEY'):
+    # Set it for langchain to find
+    os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+
 # FastAPI imports
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -130,6 +135,12 @@ def initialize_agents():
     
     try:
         print(" Initializing CrewBuilder agents...")
+        
+        # Check if we have OpenAI API key
+        if not os.getenv('OPENAI_API_KEY'):
+            print(" ERROR: OPENAI_API_KEY not found!")
+            print(" Agents will use fallback mode and won't generate real content")
+            return False
         
         if CLARIFICATION_AVAILABLE:
             try:

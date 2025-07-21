@@ -27,10 +27,11 @@ CrewBuilder is an AI-powered meta-system that generates complete, production-rea
 - **Basic UI**: ✅ Can input requirements and see generated code
 
 ### What's Not Working
-- **Backend (Railway)**: ❌ Crashes on startup (needs env vars in Railway)
-- **Clarification Agent**: ❌ Returns hardcoded questions/responses
-- **File Download**: ❌ Shows alert instead of downloading files
+- **Backend (Railway)**: ✅ Fixed! Now running with all agents
+- **Clarification Agent**: ❌ Not integrated into main flow - frontend skips it entirely
+- **File Download**: ❌ Shows alert instead of downloading files  
 - **Deployment**: ❌ Never tested with real Railway deployment
+- **Agent Count Display**: ❌ Shows "0 AI Agents" in results
 
 ### What's Completely Missing
 - **Database**: ❌ No user tracking, system history, or persistence
