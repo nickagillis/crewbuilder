@@ -7,6 +7,10 @@ import os
 # Set default LLM for CrewAI
 os.environ['OPENAI_MODEL_NAME'] = 'gpt-4o-mini'  # Use the mini model for cost efficiency
 
+# CrewAI specific settings
+os.environ['OPENAI_API_BASE'] = 'https://api.openai.com/v1'
+os.environ['OPENAI_API_TYPE'] = 'openai'
+
 # Ensure the API key is set
 if not os.getenv('OPENAI_API_KEY'):
     print("WARNING: OPENAI_API_KEY not found in environment!")
