@@ -120,41 +120,86 @@ def analyze_initial_requirement(agent: Agent, requirement: str) -> List[Clarific
     if current_question:
         questions.append(current_question)
     
-    # If parsing fails, create default questions
+    # If parsing fails, try to extract questions from raw text
+    if not questions and result:
+        # Look for any question marks in the result
+        sentences = result.replace('\n', ' ').split('.')
+        for sent in sentences:
+            if '?' in sent:
+                question_text = sent.strip()
+                if question_text:
+                    questions.append(ClarificationQuestion(
+                        question=question_text,
+                        context="This will help us better understand your requirements",
+                        options=[],
+                        question_type="open"
+                    ))
+    
+    # If still no questions, generate context-aware defaults based on the requirement
     if not questions:
-        questions = [
-            ClarificationQuestion(
-                question="What specific problem are you trying to solve with this AI agent system?",
-                context="Understanding the core problem helps us design the right solution",
+        # Analyze the requirement to generate relevant questions
+        req_lower = requirement.lower()
+        
+        questions = []
+        
+        # Always ask about the core problem
+        questions.append(ClarificationQuestion(
+            question="What specific problem are you trying to solve with this AI agent system?",
+            context="Understanding the core problem helps us design the right solution",
+            options=[],
+            question_type="open"
+        ))
+        
+        # Ask about users/audience
+        questions.append(ClarificationQuestion(
+            question="Who will be the primary users of this system?",
+            context="Knowing the users helps us design the right interface and features",
+            options=["Internal team", "Customers", "Both internal and external", "Other"],
+            question_type="multiple_choice"
+        ))
+        
+        # Add context-specific questions based on keywords in requirement
+        if any(word in req_lower for word in ['integrate', 'connect', 'api', 'system']):
+            questions.append(ClarificationQuestion(
+                question="What existing systems or APIs does this need to integrate with?",
+                context="Integration requirements affect our technical architecture",
                 options=[],
                 question_type="open"
-            ),
-            ClarificationQuestion(
-                question="Who will be the primary users of this system?",
-                context="Knowing the users helps us design the right interface and features",
-                options=["Internal team", "Customers", "Both internal and external", "Other"],
-                question_type="multiple_choice"
-            ),
-            ClarificationQuestion(
-                question="What would success look like for this system?",
-                context="Clear success criteria help us build the right features",
+            ))
+        
+        if any(word in req_lower for word in ['data', 'database', 'store', 'process']):
+            questions.append(ClarificationQuestion(
+                question="What type and volume of data will this system handle?",
+                context="Data requirements influence storage and processing design",
                 options=[],
                 question_type="open"
-            ),
-            ClarificationQuestion(
+            ))
+        
+        if any(word in req_lower for word in ['automate', 'workflow', 'process']):
+            questions.append(ClarificationQuestion(
+                question="Can you describe the current manual process this will automate?",
+                context="Understanding the current process helps design better automation",
+                options=[],
+                question_type="open"
+            ))
+        
+        # Always ask about success criteria
+        questions.append(ClarificationQuestion(
+            question="What would success look like for this system?",
+            context="Clear success criteria help us build the right features",
+            options=[],
+            question_type="open"
+        ))
+        
+        # Ask about constraints if not already covered
+        if len(questions) < 5:
+            questions.append(ClarificationQuestion(
                 question="Do you have any specific technical requirements or constraints?",
                 context="Technical constraints affect our architecture decisions",
                 options=["Must integrate with existing systems", "Specific performance requirements", 
                         "Security/compliance needs", "Budget constraints", "None"],
                 question_type="multiple_choice"
-            ),
-            ClarificationQuestion(
-                question="What is the expected timeline for this project?",
-                context="Timeline affects the scope and approach we recommend",
-                options=["ASAP (days)", "Short-term (weeks)", "Medium-term (months)", "Flexible"],
-                question_type="multiple_choice"
-            )
-        ]
+            ))
     
     return questions[:5]  # Limit to 5 questions max
 
@@ -202,39 +247,86 @@ def refine_requirements(agent: Agent, original: str, questions: List[Clarificati
         print(f"Warning: Could not execute clarification task: {e}")
         result = ""
     
-    # Parse the result into RefinedRequirements
-    # This is simplified - in production, use better parsing
+    # Parse the result from the agent's response
+    # Initialize with empty values
+    refined_req = result if result else f"Refined version of: {original}"
+    features = []
+    constraints = []
+    criteria = []
+    assumptions = []
+    out_of_scope = []
+    complexity = "moderate"
+    
+    # Parse structured sections from the agent's response
+    if result:
+        lines = result.split('\n')
+        current_section = None
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Detect section headers
+            if 'refined requirement' in line.lower() or 'description' in line.lower():
+                current_section = 'refined'
+            elif 'features' in line.lower() or 'feature list' in line.lower():
+                current_section = 'features'
+            elif 'constraint' in line.lower():
+                current_section = 'constraints'
+            elif 'success criteria' in line.lower() or 'criteria' in line.lower():
+                current_section = 'criteria'
+            elif 'assumption' in line.lower():
+                current_section = 'assumptions'
+            elif 'out of scope' in line.lower() or 'not included' in line.lower():
+                current_section = 'out_of_scope'
+            elif 'complexity' in line.lower():
+                if 'simple' in line.lower():
+                    complexity = 'simple'
+                elif 'complex' in line.lower():
+                    complexity = 'complex'
+                else:
+                    complexity = 'moderate'
+            
+            # Add items to appropriate lists
+            elif line.startswith(('•', '-', '*', '▪', '◦')) or (line and line[0].isdigit() and '.' in line[:3]):
+                item = line.lstrip('•-*▪◦0123456789. ')
+                if current_section == 'features' and item:
+                    features.append(item)
+                elif current_section == 'constraints' and item:
+                    constraints.append(item)
+                elif current_section == 'criteria' and item:
+                    criteria.append(item)
+                elif current_section == 'assumptions' and item:
+                    assumptions.append(item)
+                elif current_section == 'out_of_scope' and item:
+                    out_of_scope.append(item)
+    
+    # Extract refined requirement (first substantial paragraph)
+    if result:
+        paragraphs = [p.strip() for p in result.split('\n\n') if p.strip() and len(p.strip()) > 50]
+        if paragraphs:
+            refined_req = paragraphs[0]
+    
+    # Ensure we have at least some content in each field
+    if not features:
+        features = [f"Core functionality as described in: {original[:100]}..."]
+    if not constraints:
+        constraints = ["Requirements based on user responses"]
+    if not criteria:
+        criteria = ["System successfully addresses the stated need"]
+    if not assumptions:
+        assumptions = ["Standard technical infrastructure available"]
+    if not out_of_scope:
+        out_of_scope = ["Features not explicitly mentioned in requirements"]
+    
     return RefinedRequirements(
         original_requirement=original,
-        refined_requirement=result[:500],  # First part as main requirement
-        key_features=[
-            "Automated workflow processing",
-            "Real-time monitoring dashboard",
-            "API integration capabilities",
-            "Customizable agent behaviors",
-            "Error handling and recovery"
-        ],
-        constraints=[
-            "Must complete tasks within 5 minutes",
-            "Requires 99.9% uptime",
-            "Must integrate with existing systems"
-        ],
-        success_criteria=[
-            "Reduces manual processing time by 80%",
-            "Handles 1000+ requests per day",
-            "Achieves 95% accuracy rate"
-        ],
-        assumptions=[
-            "Users have basic technical knowledge",
-            "Internet connectivity is reliable",
-            "API rate limits are sufficient"
-        ],
-        out_of_scope=[
-            "Mobile application development",
-            "Legacy system migration",
-            "Custom UI design"
-        ],
-        estimated_complexity="moderate"
+        refined_requirement=refined_req,
+        key_features=features[:10],  # Limit to 10 features
+        constraints=constraints[:10],
+        success_criteria=criteria[:10],
+        assumptions=assumptions[:10],
+        out_of_scope=out_of_scope[:10],
+        estimated_complexity=complexity
     )
 
 def create_clarification_session(agent: Agent, requirement: str, 

@@ -1,10 +1,10 @@
 # CrewBuilder - AI-Powered Multi-Agent System Generator
 
 ## 🚀 Overview
-CrewBuilder is a complete meta-system with **10 specialized AI agents** that generates production-ready AI agent teams. Input your business requirements through the beautiful web interface, and CrewBuilder will create a complete AI system using the CrewAI framework.
+CrewBuilder is a complete meta-system with **11 specialized AI agents** that generates production-ready AI agent teams. Input your business requirements through the beautiful web interface, and CrewBuilder will create a complete AI system using the CrewAI framework.
 
 ## ✅ Current Status - Ready to Use!
-- **Backend**: Complete FastAPI server with all 10 agents operational
+- **Backend**: Complete FastAPI server with all 11 agents operational
 - **Frontend**: Professional Next.js web interface 
 - **Pipeline**: Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
 - **Integration**: Frontend connects to backend API for real-time generation
@@ -33,25 +33,26 @@ The web interface will be available at http://localhost:3000
 1. Open http://localhost:3000 in your browser
 2. Enter your business requirements (e.g., "I need to automate content creation for my blog")
 3. Click "Generate System"
-4. Watch the 10-agent pipeline create your custom AI system!
+4. Watch the 11-agent pipeline create your custom AI system!
 
-## 🤖 The 10-Agent Pipeline
+## 🤖 The 11-Agent Pipeline
 
-1. **Requirements Analyst** - Analyzes your business needs
-2. **System Architect** - Designs the AI agent architecture
-3. **Code Generator** - Creates production-ready Python code
-4. **Quality Assurance** - Validates and tests the generated code
-5. **API Detective** - Identifies and configures required APIs
-6. **Documentation Specialist** - Creates comprehensive documentation
-7. **Infrastructure Analyst** - Recommends hosting platforms
-8. **Deployment Engineer** - Generates deployment configurations
-9. **Hosting Assistant** - Provides setup guidance
-10. **Monitoring Engineer** - Sets up monitoring and alerts
+1. **Clarification Agent** - Interactively refines requirements through Q&A
+2. **Requirements Analyst** - Analyzes your business needs
+3. **System Architect** - Designs the AI agent architecture
+4. **Code Generator** - Creates production-ready Python code
+5. **Quality Assurance** - Validates and tests the generated code
+6. **API Detective** - Identifies and configures required APIs
+7. **Documentation Specialist** - Creates comprehensive documentation
+8. **Infrastructure Analyst** - Recommends hosting platforms
+9. **Deployment Engineer** - Generates deployment configurations
+10. **Hosting Assistant** - Provides setup guidance
+11. **Monitoring Engineer** - Sets up monitoring and alerts
 
 ## 📁 Project Structure
 ```
 crewbuilder/
-├── agents/              # All 10 AI agents
+├── agents/              # All 11 AI agents
 ├── web/                 # Next.js frontend
 ├── api_server.py        # FastAPI backend
 ├── requirements.txt     # Python dependencies

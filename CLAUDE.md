@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Assistant Context File
 
 ## Project Overview
-CrewBuilder is an AI-powered meta-system that generates complete, production-ready CrewAI agent systems from natural language business requirements. The project is ~90% complete with successful deployments to Railway (backend) and Vercel (frontend).
+CrewBuilder is an AI-powered meta-system that generates complete, production-ready CrewAI agent systems from natural language business requirements. The project is ~40-50% complete with the core agent pipeline implemented but missing critical infrastructure (database, auth, file handling, payment system).
 
 ### Two Distinct Systems
 1. **CrewBuilder Platform** - Our hosted service (this codebase)
@@ -19,13 +19,26 @@ CrewBuilder is an AI-powered meta-system that generates complete, production-rea
 - Backend API: https://web-production-bd955.up.railway.app
 - Frontend App: https://crewbuilder.vercel.app
 
-## Current Status (Last Updated: 2025-07-16)
-- **Core Functionality**: ✅ All 11 agents implemented (including Clarification Agent)
-- **Frontend (Vercel)**: ✅ Live and working at https://crewbuilder.vercel.app
-- **Backend (Railway)**: ❌ Builds successfully but crashes on startup
-- **Client Deployment**: 🔄 Implementing managed deployment model
-- **Testing**: ⚠️ Blocked by Railway crashes
-- **Business Model**: 🔄 In development
+## Current Status (Last Updated: 2025-07-21)
+
+### What's Actually Working
+- **Core Agents**: ✅ 11 agents exist but Clarification Agent has hardcoded responses
+- **Frontend (Vercel)**: ✅ Live at https://crewbuilder.vercel.app
+- **Basic UI**: ✅ Can input requirements and see generated code
+
+### What's Not Working
+- **Backend (Railway)**: ❌ Crashes on startup (needs env vars in Railway)
+- **Clarification Agent**: ❌ Returns hardcoded questions/responses
+- **File Download**: ❌ Shows alert instead of downloading files
+- **Deployment**: ❌ Never tested with real Railway deployment
+
+### What's Completely Missing
+- **Database**: ❌ No user tracking, system history, or persistence
+- **Authentication**: ❌ No login, users, or sessions
+- **File Processing**: ❌ Can't upload existing code or handle attachments
+- **Payment System**: ❌ No billing or subscription management
+- **Monitoring**: ❌ No error tracking or analytics
+- **Real Testing**: ❌ Never validated with actual users
 
 ### Critical Issue: Railway Deployment Crash
 - **Symptom**: Railway builds successfully but crashes immediately after deployment
@@ -217,8 +230,26 @@ certain avatar id that I've created and then send them to people in my crm gohig
 - Need comprehensive startup diagnostics for debugging
 - Test scripts are essential for backend validation
 
-## Contact & Resources
+## Documentation & Resources
+
+### Primary Documentation Files
+This is the primary AI context file. Other documentation files provide specific details:
+
+- **PROGRESS.md** - Detailed progress tracking for all components (~90% claim needs revision)
+- **CONSOLIDATED_STRATEGY.md** - Honest assessment of current state and realistic next steps
+- **README.md** - User-facing documentation and quick start guide
+- **RAILWAY_SETUP.md** - Step-by-step Railway deployment guide
+- **DEPLOYMENT_ARCHITECTURE.md** - Two-layer deployment model explanation
+- **DEPLOYMENT_CHECKLIST.md** - Pre-deployment verification checklist
+- **DEPLOYMENT_SUCCESS.md** - Live URLs and testing checklist
+
+### Repository Structure
 - Repository: [Check git remote for URL]
-- Documentation: See /docs folder
-- Progress Tracking: PROGRESS.md
-- Roadmap: CONSOLIDATED_STRATEGY.md
+- Backend: `/backend` - FastAPI + CrewAI agents
+- Frontend: `/web` - Next.js interface
+- Deployment: `/deployment` - Railway/GitHub integration
+
+### Important Notes
+- The project is realistically ~40-50% complete (not 90% as claimed in PROGRESS.md)
+- Major missing pieces: database, auth, file handling, real deployment testing
+- Clarification Agent has hardcoded responses (not fully implemented)
