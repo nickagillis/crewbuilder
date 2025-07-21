@@ -6,7 +6,7 @@ Connects the beautiful Next.js frontend to the complete 10-agent backend
 
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 import json
 import traceback
 from datetime import datetime
