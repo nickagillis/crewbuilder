@@ -835,6 +835,15 @@ async def startup_event():
     print(f"  RAILWAY_TOKEN: {'✓ Present' if os.getenv('RAILWAY_TOKEN') else '✗ Missing'}")
     print(f"  PORT: {os.getenv('PORT', 'Not set (will use 8000)')}")
     
+    # Test OpenAI connectivity
+    print("\nNetwork Check:")
+    try:
+        import socket
+        ip = socket.gethostbyname('api.openai.com')
+        print(f"  api.openai.com: ✓ Resolves to {ip}")
+    except Exception as e:
+        print(f"  api.openai.com: ✗ DNS failed - {e}")
+    
     # Test critical imports
     print("\nTesting imports:")
     critical_modules = {
