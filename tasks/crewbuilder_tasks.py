@@ -10,32 +10,21 @@ def create_clarification_task(requirement: str):
     """Task to generate clarification questions based on user requirement"""
     return Task(
         description=f"""
-        Analyze this business automation requirement and generate 3-5 highly specific 
-        clarification questions that will help build a better system.
+        Generate 3 specific questions about: {requirement[:100]}...
         
-        User Requirement: {requirement}
+        Ask about:
+        1. EXISTING SYSTEMS (email, databases, tools they already use)
+        2. Specific integration details (API keys, IDs, limits)
+        3. Volume and frequency
         
-        Focus your questions on:
-        1. Specific integrations mentioned (APIs, tools, platforms)
-        2. Volume and frequency of operations
-        3. Current pain points and manual processes
-        4. Success criteria and expected outcomes
-        5. Technical constraints or preferences
+        Examples:
+        - "What email system do you use?"
+        - "What's your HeyGen avatar ID?"
+        - "How many videos per day?"
         
-        Make questions specific to their use case, not generic. For example, if they mention
-        HeyGen, ask about avatar IDs, video length, templates. If they mention a CRM, ask
-        about specific workflows, contact segments, etc.
-        
-        Output format:
-        QUESTION 1: [Specific question]
-        CONTEXT: [Why this matters for their system]
-        
-        QUESTION 2: [Specific question]
-        CONTEXT: [Why this matters]
-        
-        (Continue for 3-5 questions)
+        Output: 3 questions only. Be specific, not generic.
         """,
-        expected_output="3-5 specific clarification questions with context",
+        expected_output="3 specific clarification questions",
         agent=None  # Will be assigned when creating crew
     )
 

@@ -5,6 +5,7 @@ These are lightweight agent definitions focused on roles, not complex implementa
 
 from crewai import Agent
 from .llm_config import get_configured_llm
+from .cost_optimizer import optimize_agent_config, get_token_limits
 
 def create_clarification_specialist():
     """Agent specialized in extracting detailed requirements through targeted questions"""
@@ -162,7 +163,7 @@ def create_orchestration_manager():
 # Helper function to get all agents
 def get_all_crewbuilder_agents():
     """Return all CrewBuilder agents for easy crew creation"""
-    return {
+    agents = {
         'clarification': create_clarification_specialist(),
         'api_analyst': create_api_analyst(),
         'architect': create_crew_architect(),
@@ -175,3 +176,12 @@ def get_all_crewbuilder_agents():
         'documentation': create_documentation_writer(),
         'manager': create_orchestration_manager()
     }
+    
+    # Apply cost optimization to all agents
+    token_limits = get_token_limits()
+    for name, agent in agents.items():
+        agent = optimize_agent_config(agent)
+        if name in token_limits and hasattr(agent, 'llm'):
+            agent.max_tokens = token_limits[name]
+    
+    return agents

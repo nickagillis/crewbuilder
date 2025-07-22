@@ -1,11 +1,12 @@
 # CrewBuilder V2 - AI Agent System Builder
 
 ## 🚀 Overview
-CrewBuilder V2 builds and deploys complete AI agent systems from natural language requirements. Using proper CrewAI patterns with **8 specialized agents**, we create production-ready systems and deploy them to managed infrastructure.
+CrewBuilder V2 builds and deploys complete AI agent systems from natural language requirements. Using proper CrewAI patterns with **11 specialized agents**, we create production-ready systems and deploy them to managed infrastructure.
 
 ## ✨ What's New in V2
 - **Proper CrewAI Patterns**: Simple agents, smart tasks, hierarchical orchestration
-- **8 Focused Specialists**: Down from 11 over-engineered agents
+- **11 Focused Specialists**: Including Interface Builder and Execution Wrapper
+- **Complete Systems**: Not just code - full API + web UI for immediate use
 - **Hosted Solution**: We deploy and manage your AI systems
 - **Conversational UI**: Natural chat interface for requirements clarification
 
@@ -36,16 +37,19 @@ npm install
 npm run dev
 ```
 
-## 🤖 The 8-Agent Architecture
+## 🤖 The 11-Agent Architecture
 
 1. **Clarification Specialist** - Natural conversation about requirements
 2. **API Analyst** - Verifies integrations are possible
 3. **Crew Architect** - Designs proper CrewAI architecture
 4. **Task Designer** - Creates detailed task workflows
 5. **Code Writer** - Implements clean CrewAI code
-6. **Quality Reviewer** - Ensures best practices
-7. **Deployment Specialist** - Railway configuration
-8. **Documentation Writer** - User-friendly guides
+6. **Interface Builder** - Creates FastAPI + web UI (NEW!)
+7. **Execution Wrapper** - Wraps agents in runnable services (NEW!)
+8. **Quality Reviewer** - Ensures best practices
+9. **Deployment Specialist** - Railway configuration
+10. **Documentation Writer** - User-friendly guides
+11. **Orchestration Manager** - Coordinates all specialists
 
 ## 📁 Project Structure
 ```
@@ -76,12 +80,14 @@ OPENAI_API_KEY=your_api_key_here
 When you input your business requirements, CrewBuilder generates:
 
 1. **Complete Python Code** - Ready-to-run CrewAI implementation
-2. **Requirements & Setup** - All dependencies and configuration
-3. **API Integration Plans** - With cost estimates and setup guides
-4. **Documentation** - User guides and technical documentation
-5. **Deployment Scripts** - Docker, Kubernetes, CI/CD pipelines
-6. **Infrastructure Plans** - Platform recommendations with costs
+2. **FastAPI + Web Interface** - Full UI to input data and see results
+3. **One-Click Deployment** - Railway-ready package with all configs
+4. **Requirements & Setup** - All dependencies and configuration
+5. **API Integration Plans** - With cost estimates and setup guides
+6. **Documentation** - User guides and technical documentation
 7. **Monitoring Setup** - Dashboards, alerts, and observability
+
+**NEW**: Systems now include a complete web interface so users can actually USE what we build!
 
 ## 🎯 Example Use Cases
 

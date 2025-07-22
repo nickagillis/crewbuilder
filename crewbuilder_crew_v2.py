@@ -10,6 +10,7 @@ from datetime import datetime
 
 # Import our simple agents
 from agents.simple_agents import get_all_crewbuilder_agents
+from agents.cost_optimizer import enforce_cost_limit
 
 # Import our task creators
 from tasks.crewbuilder_tasks import (
@@ -66,7 +67,8 @@ class CrewBuilderV2:
             ],
             tasks=[clarify_task, api_task],
             process=Process.sequential,
-            verbose=True
+            verbose=False,  # Reduce token usage
+            memory=False    # No memory for clarification phase
         )
         
         try:
@@ -170,9 +172,12 @@ class CrewBuilderV2:
             tasks=tasks,
             process=Process.hierarchical,  # Manager coordinates everything
             manager_llm=self.agents['manager'].llm,
-            verbose=True,
-            memory=True
+            verbose=False,  # Reduce token usage
+            memory=False    # Disable memory to save tokens
         )
+        
+        # Apply cost controls
+        enforce_cost_limit(building_crew, max_cost=2.0)
         
         print(f"📋 Created {len(tasks)} tasks for {len(self.agents)} agents")
         print("🎯 Starting hierarchical orchestration...")
