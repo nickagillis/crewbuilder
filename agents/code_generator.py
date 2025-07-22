@@ -216,8 +216,10 @@ from typing import List
 if __name__ == "__main__":
     print("🚀 Starting {crew_architecture.crew_name}")
     result = crew.kickoff()
+    # Convert CrewOutput to string for proper handling
+    result_text = str(result)
     print("✅ Crew execution completed!")
-    print(f"Result: {{result}}")
+    print(f"Result: {{result_text}}")
 '''
 
         requirements = """crewai>=0.1.0

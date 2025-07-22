@@ -189,8 +189,11 @@ class SystemArchitect:
         crew = Crew(agents=[self.agent], tasks=[design_task])
         result = crew.kickoff()
         
+        # Convert CrewOutput to string
+        result_text = str(result)
+        
         # Parse AI response into CrewArchitecture
-        return self._parse_architecture_design(result, tech_spec)
+        return self._parse_architecture_design(result_text, tech_spec)
     
     def _parse_architecture_design(self, ai_result: str, tech_spec: TechnicalSpecification) -> CrewArchitecture:
         """Parse AI architecture design result into structured CrewArchitecture."""

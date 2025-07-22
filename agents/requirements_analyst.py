@@ -127,13 +127,15 @@ class RequirementsAnalyst:
             result = crew.kickoff()
             print(f"Crew result type: {type(result)}")
             print(f"Crew result: {result}")
+            # Convert CrewOutput to string
+            result_text = str(result)
         except Exception as e:
             print(f"Crew execution failed: {e}")
             # Return a default result to keep going
-            result = "CATEGORY: process_automation\nCOMPLEXITY: moderate\nESTIMATED_AGENTS: 5"
+            result_text = "CATEGORY: process_automation\nCOMPLEXITY: moderate\nESTIMATED_AGENTS: 5"
         
         # Parse AI response into TechnicalSpecification
-        return self._parse_ai_analysis(result, user_input)
+        return self._parse_ai_analysis(result_text, user_input)
     
     def _parse_ai_analysis(self, ai_result: str, user_input: str) -> TechnicalSpecification:
         """Parse AI analysis result into structured TechnicalSpecification."""
@@ -306,9 +308,12 @@ class RequirementsAnalyst:
         crew = Crew(agents=[self.agent], tasks=[questions_task])
         result = crew.kickoff()
         
+        # Convert CrewOutput to string
+        result_text = str(result)
+        
         # Parse questions from AI response
         questions = []
-        for line in result.split('\n'):
+        for line in result_text.split('\n'):
             line = line.strip()
             if line and (line[0].isdigit() or line.startswith('-')):
                 question = line.split('.', 1)[-1].strip()

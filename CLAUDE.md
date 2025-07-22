@@ -127,6 +127,14 @@ crewbuilder/
 - [ ] Implement proper error boundaries in frontend
 - [ ] Add comprehensive logging for debugging (partially done)
 - [ ] User authentication and session management
+- [ ] Add debugging capabilities to generated crews:
+  - [ ] Built-in health check endpoints
+  - [ ] Error tracking and reporting
+  - [ ] API connection validation on startup
+  - [ ] Test mode with smaller models
+  - [ ] Self-diagnostic agent for monitoring
+  - [ ] Comprehensive error messages
+  - [ ] Performance metrics and cost tracking
 
 ### Deployment Implementation Status
 The deployment process has 3 steps:
@@ -244,8 +252,28 @@ certain avatar id that I've created and then send them to people in my crm gohig
 - Need comprehensive startup diagnostics for debugging
 - Test scripts are essential for backend validation
 
+## Recent Debugging Discoveries (2025-07-22)
+
+### Critical Fixes Applied:
+1. **API Key Newline Issue** - Railway environment variables can contain hidden newlines/spaces
+   - Solution: Clean all API keys with `.replace('\n', '').strip()`
+   
+2. **CrewOutput Type Error** - CrewAI returns CrewOutput objects, not strings
+   - Solution: Always use `str(result)` after `crew.kickoff()`
+   
+3. **Connection vs Authentication** - Different errors need different solutions
+   - Connection errors: Often IPv4/IPv6 or firewall issues
+   - Authentication errors: Invalid or malformed API keys
+
+### Lessons for Generated Crews:
+- Always validate environment variables on startup
+- Include proper error handling with clear messages
+- Convert CrewOutput to strings before processing
+- Add health check endpoints for debugging
+
 ## Recent Git Memory
-- then commit
+- Fixed OpenAI connection issues in Railway environment
+- Added robust setup patterns for all generated crews
 
 ## Documentation & Resources
 
