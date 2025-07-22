@@ -514,11 +514,21 @@ def root():
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
+    # Check API key status
+    api_key = os.getenv('OPENAI_API_KEY', '')
+    has_newline = '\n' in api_key
+    
     return {
         "status": "healthy",
         "agents_initialized": len(agents),
         "agents_ready": [name for name in agents.keys()],
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "api_key_status": {
+            "present": bool(api_key),
+            "length": len(api_key),
+            "has_newline": has_newline,
+            "cleaned_length": len(api_key.replace('\n', '').strip())
+        }
     }
 
 @app.get("/test-openai")

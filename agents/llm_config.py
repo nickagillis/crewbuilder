@@ -18,11 +18,15 @@ def get_configured_llm(temperature: float = 0.7, model: str = "gpt-3.5-turbo") -
     Returns:
         Configured ChatOpenAI instance or None if no API key
     """
-    api_key = os.getenv('OPENAI_API_KEY')
+    api_key = os.getenv('OPENAI_API_KEY', '')
     
     if not api_key:
         print("WARNING: No OPENAI_API_KEY found, agent will use fallback mode")
         return None
+    
+    # Clean the API key - remove newlines and extra spaces
+    api_key = api_key.replace('\n', '').replace('\r', '').strip()
+    api_key = ' '.join(api_key.split())  # Remove extra spaces
         
     # Create LLM with retry and timeout settings for Railway
     return ChatOpenAI(

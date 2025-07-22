@@ -28,13 +28,18 @@ def forced_ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
 
 socket.getaddrinfo = forced_ipv4_getaddrinfo
 
-# Ensure the API key is set
-if not os.getenv('OPENAI_API_KEY'):
+# Ensure the API key is set and clean
+api_key = os.getenv('OPENAI_API_KEY', '')
+if not api_key:
     print("WARNING: OPENAI_API_KEY not found in environment!")
 else:
-    # CrewAI looks for this specific env var
-    os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
-    print(f"✓ CrewAI configured with OpenAI API key: {os.getenv('OPENAI_API_KEY')[:20]}...")
+    # Clean the API key - remove newlines and extra spaces
+    cleaned_key = api_key.replace('\n', '').replace('\r', '').strip()
+    cleaned_key = ' '.join(cleaned_key.split())  # Remove extra spaces
+    
+    # Set the cleaned key
+    os.environ['OPENAI_API_KEY'] = cleaned_key
+    print(f"✓ CrewAI configured with OpenAI API key: {cleaned_key[:20]}...")
 
 # Set CrewAI to use OpenAI
 os.environ['CREWAI_LLM_PROVIDER'] = 'openai'
