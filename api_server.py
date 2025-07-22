@@ -577,6 +577,33 @@ async def test_network_details():
             "type": type(e).__name__
         }
 
+@app.get("/test-openai-debug")
+async def test_openai_debug():
+    """Debug OpenAI SDK specific issues"""
+    import subprocess
+    import sys
+    
+    try:
+        result = subprocess.run(
+            [sys.executable, "test_openai_debug.py"],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        return {
+            "success": result.returncode == 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "return_code": result.returncode
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+
 # Global storage for clarification sessions (in production, use a database)
 clarification_sessions = {}
 
