@@ -83,11 +83,8 @@ class SystemArchitect:
     
     def __init__(self):
         # Get configured LLM
-
         llm = get_configured_llm(temperature=0.7)
-
         
-
         self.agent = Agent(
             role='System Architect',
             goal='Design optimal multi-agent crew architectures that efficiently solve complex business problems',
@@ -107,7 +104,8 @@ class SystemArchitect:
             Your architectures are practical, well-documented, and optimized for real-world business value.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
         )
     
     def design_crew_architecture(self, tech_spec: TechnicalSpecification) -> CrewArchitecture:

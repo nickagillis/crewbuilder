@@ -109,7 +109,8 @@ class DeploymentEngineer:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
         
         # Deployment pattern knowledge base
         self.deployment_patterns = self._build_deployment_patterns()

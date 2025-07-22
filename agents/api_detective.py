@@ -73,7 +73,8 @@ class APIDetective:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
         
         # API knowledge base
         self.api_database = self._build_api_database()

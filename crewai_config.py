@@ -11,6 +11,11 @@ os.environ['OPENAI_MODEL_NAME'] = 'gpt-4o-mini'  # Use the mini model for cost e
 os.environ['OPENAI_API_BASE'] = 'https://api.openai.com/v1'
 os.environ['OPENAI_API_TYPE'] = 'openai'
 
+# LiteLLM settings (used internally by CrewAI)
+os.environ['LITELLM_LOG'] = 'DEBUG'  # Enable debug logging
+os.environ['LITELLM_TELEMETRY'] = 'False'  # Disable telemetry
+os.environ['OPENAI_API_VERSION'] = '2023-05-15'  # API version
+
 # Force IPv4 for OpenAI (Railway might default to IPv6)
 import socket
 original_getaddrinfo = socket.getaddrinfo

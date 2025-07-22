@@ -70,7 +70,8 @@ class QualityAssurance:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
     
     def validate_code(self, generated_code: str, crew_name: str = "GeneratedCrew") -> ValidationReport:
         """
@@ -196,7 +197,8 @@ class QualityAssurance:
                 "category": "structure",
                 "description": "No CrewAI Agent definitions found",
                 "suggestion": "Define at least one CrewAI Agent with role, goal, and backstory"
-            })
+            },
+        memory=False  # Disable memory to avoid connection issues
             best_practices_score -= 20
         
         # Check for proper task definitions
@@ -232,7 +234,8 @@ class QualityAssurance:
             }
         }
     
-    def _check_import_dependencies(self, code: str) -> Dict[str, Any]:
+    def _check_import_dependencies(self, code: str,
+        memory=False  # Disable memory to avoid connection issues -> Dict[str, Any]:
         """Check if all imports in the code can be resolved."""
         import_issues = []
         resolved_imports = []

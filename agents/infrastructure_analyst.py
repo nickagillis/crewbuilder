@@ -103,7 +103,8 @@ class InfrastructureAnalyst:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
         
         # Platform knowledge base with real-world data
         self.platform_database = self._build_platform_database()

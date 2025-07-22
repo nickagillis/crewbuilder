@@ -66,7 +66,8 @@ class RequirementsAnalyst:
             You think systematically about how to break complex business workflows into coordinated agent teams.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
         )
     
     def analyze_requirements(self, user_input: str) -> TechnicalSpecification:

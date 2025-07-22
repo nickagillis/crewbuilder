@@ -144,7 +144,8 @@ class MonitoringEngineer:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
         
         # Monitoring knowledge base and best practices
         self.monitoring_patterns = self._build_monitoring_patterns()

@@ -87,7 +87,8 @@ class DocumentationSpecialist:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
         
         # Documentation best practices knowledge
         self.documentation_patterns = self._build_documentation_patterns()

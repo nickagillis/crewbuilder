@@ -120,7 +120,8 @@ class HostingAssistant:
             verbose=True,
             allow_delegation=False,
             llm=llm  # Pass the LLM explicitly
-        )
+        ,
+        memory=False  # Disable memory to avoid connection issues
         
         # Platform knowledge and user guidance patterns
         self.platform_guides = self._build_platform_guides()

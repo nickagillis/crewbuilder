@@ -7,7 +7,7 @@ import os
 from langchain_openai import ChatOpenAI
 from typing import Optional
 
-def get_configured_llm(temperature: float = 0.7, model: str = "gpt-4o-mini") -> Optional[ChatOpenAI]:
+def get_configured_llm(temperature: float = 0.7, model: str = "gpt-3.5-turbo") -> Optional[ChatOpenAI]:
     """
     Get a configured LLM instance for CrewAI agents
     
