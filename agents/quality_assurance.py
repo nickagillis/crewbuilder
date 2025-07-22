@@ -4,6 +4,7 @@ Validates generated CrewAI code for quality, security, and performance standards
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import ast
 import json
 import sys
@@ -50,6 +51,12 @@ class QualityAssurance:
     
     def __init__(self):
         """Initialize the Quality Assurance agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Quality Assurance Engineer",
             goal="Review and validate generated CrewAI code to ensure it meets quality, security, and performance standards while following best practices",
@@ -61,7 +68,8 @@ class QualityAssurance:
 
             Your reviews are thorough but practical - you balance perfectionism with pragmatism, understanding that generated code needs to work in real-world conditions while being maintainable by teams with varying levels of expertise.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
     
     def validate_code(self, generated_code: str, crew_name: str = "GeneratedCrew") -> ValidationReport:

@@ -4,6 +4,7 @@ Identifies all necessary APIs, tools, and integrations required for generated cr
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
@@ -53,6 +54,12 @@ class APIDetective:
     
     def __init__(self):
         """Initialize the API Detective agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="API Detective", 
             goal="Identify all necessary APIs, tools, and integrations required for the generated crew system, providing comprehensive recommendations with cost analysis and setup guidance",
@@ -64,7 +71,8 @@ class APIDetective:
 
             Your recommendations are always practical and implementation-focused. You don't just suggest APIs - you provide complete integration plans with setup instructions, code templates, cost estimates, and risk assessments that enable teams to move quickly from planning to implementation.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
         
         # API knowledge base

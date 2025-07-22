@@ -4,6 +4,7 @@ Creates comprehensive monitoring, observability, and alerting systems for AI age
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
@@ -122,6 +123,12 @@ class MonitoringEngineer:
     
     def __init__(self):
         """Initialize the Monitoring Engineer agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Monitoring Engineer", 
             goal="Design and implement comprehensive monitoring, observability, and alerting systems that provide complete visibility into AI agent system performance, costs, security, and business metrics, enabling proactive management and continuous optimization",
@@ -135,7 +142,8 @@ class MonitoringEngineer:
 
             You believe that great monitoring makes complex systems manageable and gives teams confidence to move fast while maintaining reliability. You design observability systems that grow with organizations, provide value from day one, and enable data-driven decision making across technical and business stakeholders. Your goal is to make system operations so predictable and well-instrumented that teams can focus on building value instead of fighting fires.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
         
         # Monitoring knowledge base and best practices

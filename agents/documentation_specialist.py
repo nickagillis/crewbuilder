@@ -4,6 +4,7 @@ Generates comprehensive user documentation and setup guides for non-technical us
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import json
 import re
 from typing import Dict, List, Any, Optional
@@ -67,6 +68,12 @@ class DocumentationSpecialist:
     
     def __init__(self):
         """Initialize the Documentation Specialist agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Documentation Specialist", 
             goal="Generate comprehensive, user-friendly documentation that enables non-technical users to successfully deploy, configure, and maintain AI agent systems with minimal friction",
@@ -78,7 +85,8 @@ class DocumentationSpecialist:
 
             Your documentation doesn't just explain how to do something - it explains why, what to expect, how to verify success, and what to do when things don't go as planned. You create documentation that users actually want to read and that makes them feel confident rather than overwhelmed.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
         
         # Documentation best practices knowledge

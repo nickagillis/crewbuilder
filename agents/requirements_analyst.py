@@ -16,7 +16,7 @@ from crewai import Agent, Task, Crew
 from typing import Dict, List, Any
 import json
 from dataclasses import dataclass
-# Removed llm_config import - let CrewAI use defaults
+from .llm_config import get_configured_llm
 
 @dataclass
 class BusinessRequirement:
@@ -48,7 +48,9 @@ class RequirementsAnalyst:
     """
     
     def __init__(self):
-        # For now, skip LLM config until we fix the issue
+        # Get configured LLM
+        llm = get_configured_llm(temperature=0.7)
+        
         self.agent = Agent(
             role='Requirements Analyst',
             goal='Transform user business needs into structured technical requirements with intelligent agent architecture recommendations',
@@ -63,7 +65,8 @@ class RequirementsAnalyst:
             
             You think systematically about how to break complex business workflows into coordinated agent teams.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
     
     def analyze_requirements(self, user_input: str) -> TechnicalSpecification:

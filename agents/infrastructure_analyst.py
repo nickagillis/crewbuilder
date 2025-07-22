@@ -4,6 +4,7 @@ Evaluates hosting platforms, analyzes costs, and recommends optimal infrastructu
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
@@ -81,6 +82,12 @@ class InfrastructureAnalyst:
     
     def __init__(self):
         """Initialize the Infrastructure Analyst agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Infrastructure Analyst", 
             goal="Evaluate hosting platforms, analyze costs, and recommend optimal infrastructure solutions that balance performance, cost, security, and operational simplicity for AI agent systems",
@@ -94,7 +101,8 @@ class InfrastructureAnalyst:
 
             Your recommendations prioritize operational sanity: systems that are observable, maintainable, secure by default, and cost-predictable. You know that premature optimization is dangerous, but so is technical debt that becomes expensive to fix later.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
         
         # Platform knowledge base with real-world data

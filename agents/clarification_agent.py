@@ -5,6 +5,7 @@ This agent ensures we fully understand what the client needs before building
 
 from crewai import Agent, Task
 from typing import List, Dict, Any
+from .llm_config import get_configured_llm
 from pydantic import BaseModel, Field
 from datetime import datetime
 
@@ -39,6 +40,9 @@ class ClarificationSession(BaseModel):
 def create_clarification_agent():
     """Create the Clarification Agent that refines requirements through interaction"""
     
+    # Get configured LLM
+    llm = get_configured_llm(temperature=0.7)
+    
     return Agent(
         role="Requirements Clarification Specialist",
         goal="Engage with users to deeply understand their needs and refine vague requirements into crystal-clear specifications",
@@ -47,6 +51,7 @@ def create_clarification_agent():
         architect. You know exactly what questions to ask to uncover hidden requirements, 
         constraints, and success criteria. You're friendly but thorough, ensuring nothing 
         important is missed while keeping the conversation engaging.""",
+        llm=llm,  # Pass the LLM explicitly
         verbose=True,
         allow_delegation=False,
         tools=[],  # This agent uses conversation, not tools

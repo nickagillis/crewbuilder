@@ -4,6 +4,7 @@ Generates automated deployment configurations and CI/CD pipelines for AI agent s
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
@@ -87,6 +88,12 @@ class DeploymentEngineer:
     
     def __init__(self):
         """Initialize the Deployment Engineer agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Deployment Engineer", 
             goal="Generate automated deployment configurations, CI/CD pipelines, and operational infrastructure that enables reliable, secure, and cost-effective deployment of AI agent systems across multiple platforms and environments",
@@ -100,7 +107,8 @@ class DeploymentEngineer:
 
             You understand that the best deployment system is one that the team can actually operate and maintain. You prioritize simplicity over cleverness, documentation over assumptions, and gradual improvements over revolutionary changes. Your goal is to make deployment so reliable and automated that teams can focus on building great products instead of fighting infrastructure.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
         
         # Deployment pattern knowledge base

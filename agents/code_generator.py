@@ -6,6 +6,7 @@ import json
 import re
 
 from crewai import Agent, Task, Crew
+from .llm_config import get_configured_llm
 from .system_architect import CrewArchitecture, GeneratedCode
 
 
@@ -20,6 +21,12 @@ class CodeGenerator:
     
     def __init__(self):
         """Initialize the Code Generator agent"""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Code Generation Specialist",
             goal="Convert crew architectures into clean, runnable CrewAI Python code",
@@ -31,7 +38,8 @@ class CodeGenerator:
             verbose=True,
             max_iter=3,
             memory=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
     
     def generate_crew_code(self, crew_architecture: CrewArchitecture) -> GeneratedCode:

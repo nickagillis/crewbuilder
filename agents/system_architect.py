@@ -7,6 +7,7 @@ Takes technical specifications and designs optimal CrewAI crew architectures.
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 from crewai import Agent, Task, Crew
+from .llm_config import get_configured_llm
 from .requirements_analyst import TechnicalSpecification
 
 
@@ -81,6 +82,12 @@ class SystemArchitect:
     """
     
     def __init__(self):
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role='System Architect',
             goal='Design optimal multi-agent crew architectures that efficiently solve complex business problems',
@@ -99,7 +106,8 @@ class SystemArchitect:
             
             Your architectures are practical, well-documented, and optimized for real-world business value.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
     
     def design_crew_architecture(self, tech_spec: TechnicalSpecification) -> CrewArchitecture:

@@ -4,6 +4,7 @@ Guides users through platform setup, configuration, and ongoing management of AI
 """
 
 from crewai import Agent, Task
+from .llm_config import get_configured_llm
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
@@ -98,6 +99,12 @@ class HostingAssistant:
     
     def __init__(self):
         """Initialize the Hosting Assistant agent."""
+        # Get configured LLM
+
+        llm = get_configured_llm(temperature=0.7)
+
+        
+
         self.agent = Agent(
             role="Hosting Assistant", 
             goal="Guide users through platform setup, configuration, and ongoing management of AI agent systems, making complex hosting tasks accessible to non-technical users while ensuring reliable, secure, and cost-effective operations",
@@ -111,7 +118,8 @@ class HostingAssistant:
 
             You're an advocate for the user, always looking for ways to simplify processes, reduce ongoing maintenance, and build systems that work reliably with minimal intervention. You believe that the best hosting solution is one that users can confidently manage and scale as their needs grow.""",
             verbose=True,
-            allow_delegation=False
+            allow_delegation=False,
+            llm=llm  # Pass the LLM explicitly
         )
         
         # Platform knowledge and user guidance patterns
