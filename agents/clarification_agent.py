@@ -84,13 +84,27 @@ def analyze_initial_requirement(agent: Agent, requirement: str) -> List[Clarific
         - Mark the question type (open, multiple_choice, yes_no)
         
         Focus on questions that will most impact the system design.
+        
+        Format your response as a numbered list of questions, like:
+        1. Question: [Your specific question about their requirement]
+           Context: [Why you're asking this]
+           Type: [open/multiple_choice/yes_no]
+        
+        2. Question: [Next question]
+           Context: [Why this matters]
+           Type: [open/multiple_choice/yes_no]
         """,
         agent=agent,
-        expected_output="A list of clarification questions with context and options"
+        expected_output="A numbered list of 3-5 specific clarification questions about the user's requirement"
     )
     
     try:
-        result = agent.execute_task(task)
+        from crewai import Crew
+        crew = Crew(agents=[agent], tasks=[task])
+        result = crew.kickoff()
+        # Convert CrewOutput to string
+        result = str(result)
+        print(f"Clarification result: {result[:200]}...")
     except Exception as e:
         print(f"Warning: Could not execute clarification task: {e}")
         result = ""
@@ -247,7 +261,12 @@ def refine_requirements(agent: Agent, original: str, questions: List[Clarificati
     )
     
     try:
-        result = agent.execute_task(task)
+        from crewai import Crew
+        crew = Crew(agents=[agent], tasks=[task])
+        result = crew.kickoff()
+        # Convert CrewOutput to string
+        result = str(result)
+        print(f"Clarification result: {result[:200]}...")
     except Exception as e:
         print(f"Warning: Could not execute clarification task: {e}")
         result = ""
