@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, ArrowRight, Users, Cog, Monitor } from 'lucide-react'
 import RequirementInput from '../components/RequirementInput'
-import ClarificationFlow from '../components/ClarificationFlow'
+import ClarificationChat from '../components/ClarificationChat'
 import GenerationProgress from '../components/GenerationProgress'
 import SystemOutput from '../components/SystemOutput'
 import DeploymentFlow from '../components/DeploymentFlow'
@@ -217,9 +217,10 @@ export default function Home() {
           )}
           
           {currentStep === 'clarifying' && clarificationData && (
-            <ClarificationFlow
+            <ClarificationChat
               questions={clarificationData.questions}
               sessionId={clarificationData.session_id}
+              requirement={userRequirement}
               onComplete={handleClarificationComplete}
               onSkip={handleSkipClarification}
             />
