@@ -617,6 +617,91 @@ async def test_openai_debug():
 # Global storage for clarification sessions (in production, use a database)
 clarification_sessions = {}
 
+@app.post("/api/clarify/chat")
+async def clarify_chat(request: dict):
+    """
+    Conversational clarification - responds to user messages dynamically
+    """
+    try:
+        user_message = request.get('message', '')
+        conversation_history = request.get('history', [])
+        original_requirement = request.get('requirement', '')
+        
+        if not CLARIFICATION_AVAILABLE:
+            return {"response": "Let me help you with that. Can you tell me more about your specific use case?"}
+        
+        # Check if agents are initialized
+        if 'clarification_agent' not in agents:
+            print("📝 Agents not initialized, initializing now...")
+            if not initialize_agents():
+                return {"response": "I'm having trouble initializing. Can you tell me more about your needs?", "ready_to_build": False}
+        
+        # Build context from conversation
+        context = f"Original requirement: {original_requirement}\n\n"
+        context += "Conversation so far:\n"
+        for msg in conversation_history[-5:]:  # Last 5 messages for context
+            context += f"{msg['role']}: {msg['content']}\n"
+        context += f"User: {user_message}\n"
+        
+        # Count exchanges to determine if ready to build
+        user_messages = len([m for m in conversation_history if m['role'] == 'user']) + 1
+        
+        # Create task for clarification agent
+        from crewai import Task, Crew
+        task = Task(
+            description=f"""
+            You are having a clarification conversation with a user about their specific automation needs.
+            
+            {context}
+            
+            IMPORTANT: 
+            - The user wants to: "{original_requirement}"
+            - Respond SPECIFICALLY to what they just said: "{user_message}"
+            - Ask ONE targeted question about their specific use case
+            - Be conversational and natural, not robotic
+            - Focus on details that matter for building their system
+            
+            Exchange count: {user_messages}
+            
+            {f"After {user_messages} exchanges, if you have enough information, say 'I have everything I need to build you an amazing system. Let me get started on designing your custom AI agents...'" if user_messages >= 4 else "Keep asking targeted questions to understand their needs better."}
+            
+            DO NOT ask generic questions. Ask about:
+            - Specific integrations they mentioned (like HeyGen, GoHighLevel, etc.)
+            - Volume and frequency of their workflow
+            - Current pain points in their process
+            - Technical constraints or preferences
+            """,
+            agent=agents['clarification_agent'],
+            expected_output="A natural conversational response with one specific follow-up question about their use case"
+        )
+        
+        crew = Crew(agents=[agents['clarification_agent']], tasks=[task])
+        result = crew.kickoff()
+        response_text = str(result)
+        
+        # Check if ready to build
+        ready_indicators = [
+            "everything i need",
+            "let me get started",
+            "ready to build",
+            "start designing",
+            "begin building"
+        ]
+        ready_to_build = any(indicator in response_text.lower() for indicator in ready_indicators) or user_messages >= 5
+        
+        return {
+            "response": response_text,
+            "ready_to_build": ready_to_build
+        }
+        
+    except Exception as e:
+        print(f"❌ Clarification chat error: {str(e)}")
+        # Fallback response
+        return {
+            "response": "I'd love to understand more about what you're trying to achieve. Can you tell me about your current process?",
+            "ready_to_build": False
+        }
+
 @app.post("/api/clarify", response_model=ClarificationResponse)
 async def clarify_requirement(request: ClarificationRequest):
     """

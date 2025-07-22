@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, ArrowRight, Users, Cog, Monitor } from 'lucide-react'
 import RequirementInput from '../components/RequirementInput'
-import ClarificationChat from '../components/ClarificationChat'
+import ClarificationConversation from '../components/ClarificationConversation'
 import GenerationProgress from '../components/GenerationProgress'
 import SystemOutput from '../components/SystemOutput'
 import DeploymentFlow from '../components/DeploymentFlow'
@@ -15,6 +15,7 @@ export default function Home() {
   const [userRequirement, setUserRequirement] = useState('')
   const [deploymentInfo, setDeploymentInfo] = useState(null)
   const [clarificationData, setClarificationData] = useState<any>(null)
+  const [clarificationHistory, setClarificationHistory] = useState<any[]>([])
 
   const handleStartGeneration = async (requirement: string) => {
     setUserRequirement(requirement)
@@ -49,33 +50,12 @@ export default function Home() {
     }
   }
 
-  const handleClarificationComplete = async (responses: Record<string, string>) => {
+  const handleClarificationComplete = async (conversationHistory: any[]) => {
+    setClarificationHistory(conversationHistory)
     setCurrentStep('generating')
     
-    try {
-      // Submit answers and get refined requirements
-      const answerResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://web-production-bd955.up.railway.app'}/api/clarify/answer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          session_id: clarificationData.session_id,
-          responses 
-        }),
-      })
-
-      if (!answerResponse.ok) {
-        throw new Error('Answer submission failed')
-      }
-
-      // Now generate with refined requirements
-      await generateSystem(userRequirement, false)
-    } catch (error) {
-      console.error('Answer submission error:', error)
-      // Fallback to generation without clarification
-      await generateSystem(userRequirement, true)
-    }
+    // Generate with the conversation context
+    await generateSystem(userRequirement, false)
   }
 
   const handleSkipClarification = async () => {
@@ -216,11 +196,10 @@ export default function Home() {
             <RequirementInput onStartGeneration={handleStartGeneration} />
           )}
           
-          {currentStep === 'clarifying' && clarificationData && (
-            <ClarificationChat
-              questions={clarificationData.questions}
-              sessionId={clarificationData.session_id}
+          {currentStep === 'clarifying' && (
+            <ClarificationConversation
               requirement={userRequirement}
+              sessionId={clarificationData?.session_id || `session_${Date.now()}`}
               onComplete={handleClarificationComplete}
               onSkip={handleSkipClarification}
             />
