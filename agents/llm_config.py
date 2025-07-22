@@ -24,8 +24,14 @@ def get_configured_llm(temperature: float = 0.7, model: str = "gpt-4o-mini") -> 
         print("WARNING: No OPENAI_API_KEY found, agent will use fallback mode")
         return None
         
+    # Create LLM with retry and timeout settings for Railway
     return ChatOpenAI(
         model=model,
         temperature=temperature,
-        api_key=api_key
+        api_key=api_key,
+        max_retries=3,  # Retry failed requests
+        timeout=60,  # 60 second timeout
+        request_timeout=60,  # Also set request timeout
+        streaming=False,  # Disable streaming for stability
+        verbose=True  # Enable verbose logging
     )
