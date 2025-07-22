@@ -108,9 +108,9 @@ class DeploymentEngineer:
             You understand that the best deployment system is one that the team can actually operate and maintain. You prioritize simplicity over cleverness, documentation over assumptions, and gradual improvements over revolutionary changes. Your goal is to make deployment so reliable and automated that teams can focus on building great products instead of fighting infrastructure.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
-        ,
-        memory=False  # Disable memory to avoid connection issues
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
+        )
         
         # Deployment pattern knowledge base
         self.deployment_patterns = self._build_deployment_patterns()

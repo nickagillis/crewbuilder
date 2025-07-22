@@ -102,9 +102,9 @@ class InfrastructureAnalyst:
             Your recommendations prioritize operational sanity: systems that are observable, maintainable, secure by default, and cost-predictable. You know that premature optimization is dangerous, but so is technical debt that becomes expensive to fix later.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
-        ,
-        memory=False  # Disable memory to avoid connection issues
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
+        )
         
         # Platform knowledge base with real-world data
         self.platform_database = self._build_platform_database()

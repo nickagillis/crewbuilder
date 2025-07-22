@@ -119,9 +119,9 @@ class HostingAssistant:
             You're an advocate for the user, always looking for ways to simplify processes, reduce ongoing maintenance, and build systems that work reliably with minimal intervention. You believe that the best hosting solution is one that users can confidently manage and scale as their needs grow.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
-        ,
-        memory=False  # Disable memory to avoid connection issues
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
+        )
         
         # Platform knowledge and user guidance patterns
         self.platform_guides = self._build_platform_guides()

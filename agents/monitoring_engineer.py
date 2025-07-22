@@ -143,9 +143,9 @@ class MonitoringEngineer:
             You believe that great monitoring makes complex systems manageable and gives teams confidence to move fast while maintaining reliability. You design observability systems that grow with organizations, provide value from day one, and enable data-driven decision making across technical and business stakeholders. Your goal is to make system operations so predictable and well-instrumented that teams can focus on building value instead of fighting fires.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
-        ,
-        memory=False  # Disable memory to avoid connection issues
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
+        )
         
         # Monitoring knowledge base and best practices
         self.monitoring_patterns = self._build_monitoring_patterns()

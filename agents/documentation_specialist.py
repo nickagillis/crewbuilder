@@ -86,9 +86,9 @@ class DocumentationSpecialist:
             Your documentation doesn't just explain how to do something - it explains why, what to expect, how to verify success, and what to do when things don't go as planned. You create documentation that users actually want to read and that makes them feel confident rather than overwhelmed.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
-        ,
-        memory=False  # Disable memory to avoid connection issues
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
+        )
         
         # Documentation best practices knowledge
         self.documentation_patterns = self._build_documentation_patterns()

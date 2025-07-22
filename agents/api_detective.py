@@ -72,9 +72,9 @@ class APIDetective:
             Your recommendations are always practical and implementation-focused. You don't just suggest APIs - you provide complete integration plans with setup instructions, code templates, cost estimates, and risk assessments that enable teams to move quickly from planning to implementation.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm  # Pass the LLM explicitly
-        ,
-        memory=False  # Disable memory to avoid connection issues
+            llm=llm,  # Pass the LLM explicitly
+            memory=False  # Disable memory to avoid connection issues
+        )
         
         # API knowledge base
         self.api_database = self._build_api_database()
