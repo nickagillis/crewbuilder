@@ -549,6 +549,34 @@ async def test_openai_connection():
             "type": type(e).__name__
         }
 
+@app.get("/test-network")
+async def test_network_details():
+    """Detailed network diagnostics"""
+    import subprocess
+    import sys
+    
+    try:
+        # Run the detailed network test
+        result = subprocess.run(
+            [sys.executable, "test_network_details.py"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        return {
+            "success": result.returncode == 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "return_code": result.returncode
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+
 # Global storage for clarification sessions (in production, use a database)
 clarification_sessions = {}
 
