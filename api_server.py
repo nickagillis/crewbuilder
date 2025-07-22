@@ -251,6 +251,8 @@ async def generate_system(request: GenerationRequest):
                     "complexity_score": 2,
                     "pipeline_stages": format_pipeline_stages(result),
                     "generated_code": result.get('generated_code', ''),
+                    "interface_code": result.get('interface_code', ''),
+                    "deployment_package": result.get('deployment_package', ''),
                     "requirements_txt": result.get('requirements_txt', ''),
                     "documentation": result.get('documentation', '')
                 }

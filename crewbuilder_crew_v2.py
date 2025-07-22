@@ -23,6 +23,10 @@ from tasks.crewbuilder_tasks import (
     create_documentation_task,
     create_final_package_task
 )
+from tasks.interface_tasks import (
+    create_interface_generation_task,
+    create_deployment_wrapper_task
+)
 
 class CrewBuilderV2:
     """
@@ -136,13 +140,25 @@ class CrewBuilderV2:
         deploy_task.context = [code_task]
         tasks.append(deploy_task)
         
-        # 6. Documentation
+        # 6. Interface Generation - NEW!
+        interface_task = create_interface_generation_task("{generated_code}", requirement)
+        interface_task.agent = self.agents['interface_builder']
+        interface_task.context = [code_task]
+        tasks.append(interface_task)
+        
+        # 7. Deployment Wrapper - NEW!
+        wrapper_task = create_deployment_wrapper_task("{interface_code}")
+        wrapper_task.agent = self.agents['execution_wrapper']
+        wrapper_task.context = [interface_task]
+        tasks.append(wrapper_task)
+        
+        # 8. Documentation (updated to include interface docs)
         docs_task = create_documentation_task("{generated_code}", "{deployment_config}")
         docs_task.agent = self.agents['documentation']
-        docs_task.context = [code_task, deploy_task]
+        docs_task.context = [code_task, deploy_task, interface_task]
         tasks.append(docs_task)
         
-        # 7. Final Package
+        # 9. Final Package
         package_task = create_final_package_task()
         package_task.agent = self.agents['manager']  # Manager summarizes everything
         package_task.context = tasks[:-1]  # All previous tasks
@@ -170,7 +186,7 @@ class CrewBuilderV2:
             
             # Extract outputs from tasks
             outputs = {}
-            task_names = ['architecture', 'task_flow', 'code', 'review', 'deployment', 'documentation', 'package']
+            task_names = ['architecture', 'task_flow', 'code', 'review', 'deployment', 'interface', 'wrapper', 'documentation', 'package']
             
             for task, name in zip(tasks, task_names):
                 try:
@@ -206,6 +222,8 @@ class CrewBuilderV2:
                 'requirement': requirement,
                 'architecture': outputs.get('architecture'),
                 'generated_code': main_py or generated_code,
+                'interface_code': outputs.get('interface'),
+                'deployment_package': outputs.get('wrapper'),
                 'requirements_txt': requirements,
                 'deployment_config': outputs.get('deployment'),
                 'documentation': outputs.get('documentation'),

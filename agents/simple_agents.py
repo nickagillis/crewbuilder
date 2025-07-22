@@ -118,6 +118,33 @@ def create_documentation_writer():
         allow_delegation=False
     )
 
+def create_interface_builder():
+    """Agent that builds complete usable interfaces - THE MISSING PIECE!"""
+    return Agent(
+        role="Full-Stack Interface Developer",
+        goal="Create complete web interfaces so users can actually USE their AI systems",
+        backstory="""You build practical interfaces that make AI systems usable. Every system 
+        needs an input method, execution trigger, and results display. You create FastAPI 
+        backends with simple HTML frontends that include forms, buttons, and status displays. 
+        You ensure users can input data, run their crews, and see results.""",
+        llm=get_configured_llm(temperature=0.3),
+        verbose=True,
+        allow_delegation=False
+    )
+
+def create_execution_wrapper():
+    """Agent that wraps CrewAI in runnable services"""
+    return Agent(
+        role="API Service Developer",
+        goal="Wrap CrewAI agents in production-ready API services",
+        backstory="""You make AI agents accessible through APIs. You create FastAPI services 
+        that handle long-running tasks, manage state, and provide status endpoints. You ensure 
+        systems can run reliably with proper async handling and error management.""",
+        llm=get_configured_llm(temperature=0.2),
+        verbose=True,
+        allow_delegation=False
+    )
+
 def create_orchestration_manager():
     """Manager agent for hierarchical process coordination"""
     return Agent(
@@ -141,6 +168,8 @@ def get_all_crewbuilder_agents():
         'architect': create_crew_architect(),
         'task_designer': create_task_designer(),
         'code_writer': create_code_writer(),
+        'interface_builder': create_interface_builder(),
+        'execution_wrapper': create_execution_wrapper(),
         'quality_reviewer': create_quality_reviewer(),
         'deployment': create_deployment_specialist(),
         'documentation': create_documentation_writer(),
