@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Sparkles, ArrowRight, Users, Cog, Monitor } from 'lucide-react'
 import RequirementInput from '../components/RequirementInput'
 import ClarificationConversation from '../components/ClarificationConversation'
-import GenerationProgress from '../components/GenerationProgress'
+import GenerationProgressV2 from '../components/GenerationProgressV2'
 import SystemOutput from '../components/SystemOutput'
 import DeploymentFlow from '../components/DeploymentFlow'
 
@@ -144,10 +144,10 @@ export default function Home() {
               <span className="text-sm text-gray-400">AI Agent Meta-System</span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-400">Phase 2: Learning-Enhanced</span>
+              <span className="text-sm text-gray-400">V2: Proper CrewAI Patterns</span>
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-xs text-gray-400">11 Agents Active</span>
+                <span className="text-xs text-gray-400">8 Specialist Agents</span>
               </div>
             </div>
           </div>
@@ -174,8 +174,8 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <Users className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Smart Generation</h3>
-              <p className="text-gray-600">10-agent pipeline learns from every interaction to generate better systems</p>
+              <h3 className="text-lg font-semibold mb-2">Proper CrewAI Patterns</h3>
+              <p className="text-gray-600">8 specialist agents with hierarchical orchestration following best practices</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <Cog className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
@@ -206,7 +206,7 @@ export default function Home() {
           )}
           
           {currentStep === 'generating' && (
-            <GenerationProgress requirement={userRequirement} />
+            <GenerationProgressV2 requirement={userRequirement} />
           )}
           
           {currentStep === 'complete' && generatedSystem && (

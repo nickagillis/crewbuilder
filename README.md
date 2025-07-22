@@ -1,53 +1,51 @@
-# CrewBuilder - AI-Powered Multi-Agent System Generator
+# CrewBuilder V2 - AI Agent System Builder
 
 ## 🚀 Overview
-CrewBuilder is a complete meta-system with **11 specialized AI agents** that generates production-ready AI agent teams. Input your business requirements through the beautiful web interface, and CrewBuilder will create a complete AI system using the CrewAI framework.
+CrewBuilder V2 builds and deploys complete AI agent systems from natural language requirements. Using proper CrewAI patterns with **8 specialized agents**, we create production-ready systems and deploy them to managed infrastructure.
 
-## ✅ Current Status - Ready to Use!
-- **Backend**: Complete FastAPI server with all 11 agents operational
-- **Frontend**: Professional Next.js web interface 
-- **Pipeline**: Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
-- **Integration**: Frontend connects to backend API for real-time generation
+## ✨ What's New in V2
+- **Proper CrewAI Patterns**: Simple agents, smart tasks, hierarchical orchestration
+- **8 Focused Specialists**: Down from 11 over-engineered agents
+- **Hosted Solution**: We deploy and manage your AI systems
+- **Conversational UI**: Natural chat interface for requirements clarification
 
 ## 🏃‍♂️ Quick Start
 
-### 1. Start the Backend Server
+### For Users
+1. Visit https://crewbuilder.vercel.app
+2. Describe what you want to automate
+3. Chat with our AI to refine requirements
+4. Get a complete, deployed AI system
+
+### For Developers
 ```bash
-# Using Python (Windows)
-py api_server.py
+# Install dependencies
+pip install -r requirements.txt
 
-# Using Python (Mac/Linux)
-python api_server.py
+# Set OpenAI API key
+export OPENAI_API_KEY='your-key'
+
+# Start the API server
+python main.py
 ```
-The API server will start on http://localhost:8000
 
-### 2. Start the Frontend
+Frontend development:
 ```bash
 cd web
-npm install  # First time only
+npm install
 npm run dev
 ```
-The web interface will be available at http://localhost:3000
 
-### 3. Generate Your First AI System
-1. Open http://localhost:3000 in your browser
-2. Enter your business requirements (e.g., "I need to automate content creation for my blog")
-3. Click "Generate System"
-4. Watch the 11-agent pipeline create your custom AI system!
+## 🤖 The 8-Agent Architecture
 
-## 🤖 The 11-Agent Pipeline
-
-1. **Clarification Agent** - Interactively refines requirements through Q&A
-2. **Requirements Analyst** - Analyzes your business needs
-3. **System Architect** - Designs the AI agent architecture
-4. **Code Generator** - Creates production-ready Python code
-5. **Quality Assurance** - Validates and tests the generated code
-6. **API Detective** - Identifies and configures required APIs
-7. **Documentation Specialist** - Creates comprehensive documentation
-8. **Infrastructure Analyst** - Recommends hosting platforms
-9. **Deployment Engineer** - Generates deployment configurations
-10. **Hosting Assistant** - Provides setup guidance
-11. **Monitoring Engineer** - Sets up monitoring and alerts
+1. **Clarification Specialist** - Natural conversation about requirements
+2. **API Analyst** - Verifies integrations are possible
+3. **Crew Architect** - Designs proper CrewAI architecture
+4. **Task Designer** - Creates detailed task workflows
+5. **Code Writer** - Implements clean CrewAI code
+6. **Quality Reviewer** - Ensures best practices
+7. **Deployment Specialist** - Railway configuration
+8. **Documentation Writer** - User-friendly guides
 
 ## 📁 Project Structure
 ```

@@ -2,7 +2,8 @@
 # Building AI agents that build AI agent systems
 
 # Core CrewAI framework
-crewai==0.141.0
+crewai==0.148.0
+crewai-tools  # Now required, not optional
 
 # AI/LLM dependencies
 openai>=1.0.0

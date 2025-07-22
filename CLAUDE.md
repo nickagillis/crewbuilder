@@ -254,9 +254,49 @@ certain avatar id that I've created and then send them to people in my crm gohig
 - Need comprehensive startup diagnostics for debugging
 - Test scripts are essential for backend validation
 
-## Recent Debugging Discoveries (2025-07-22)
+## Major Architecture Refactor (2025-07-22)
 
-### Critical Fixes Applied:
+### Complete Rebuild Following CrewAI Best Practices
+We discovered we were building AGAINST CrewAI's design patterns. Major changes:
+
+1. **Simple Agents** - Replaced complex agent classes with simple definitions
+   - Before: Each agent had internal crews, methods, complex logic
+   - After: Agents are just role/goal/backstory (as CrewAI intended)
+
+2. **Smart Tasks** - Moved all logic from agents to tasks
+   - Before: 80% effort on agents, 20% on tasks
+   - After: 20% effort on agents, 80% on tasks (CrewAI best practice)
+
+3. **Proper Orchestration** - Using CrewAI's hierarchical process
+   - Before: Manual sequential pipeline calling each agent
+   - After: One Crew with hierarchical process, manager coordinates
+
+4. **No More Fallbacks** - If it fails, we fix it properly
+   - Before: Fallback to bad patterns when things break
+   - After: Fix the root cause, teach proper patterns
+
+### Key Files in New Architecture
+- `/agents/simple_agents.py` - Simple agent definitions (8 specialists)
+- `/tasks/crewbuilder_tasks.py` - Task definitions with all logic
+- `/crewbuilder_crew_v2.py` - Proper CrewAI orchestration
+- `/api_server.py` - Clean V2 API implementation
+- `/web/components/GenerationProgressV2.tsx` - Updated UI for new flow
+- Updated to CrewAI 0.148.0 (from 0.141.0)
+
+### What We Removed/Archived
+- All old complex agent files (moved to `.archive/old_agents/`)
+- Old orchestrator pattern (`.archive/crewbuilder_orchestrator.py`)
+- Serena memories (not applicable - that was Claude Desktop)
+- PROGRESS.md (was tracking old system)
+- Demo files that used old patterns
+
+### Current Focus
+- **NOT teaching users to build** - We build FOR them
+- **Hosted solution** - Deploy to our Railway infrastructure
+- **Value proposition** - They describe, we deliver working system
+- **Simple dashboard** - Just API keys and status (not complex UI)
+
+### Previous Debugging Discoveries
 1. **API Key Newline Issue** - Railway environment variables can contain hidden newlines/spaces
    - Solution: Clean all API keys with `.replace('\n', '').strip()`
    
@@ -268,14 +308,13 @@ certain avatar id that I've created and then send them to people in my crm gohig
    - Authentication errors: Invalid or malformed API keys
 
 ### Lessons for Generated Crews:
+- Use simple agents with clear specializations
+- Put the work in tasks, not agents
+- Follow CrewAI patterns exactly - they exist for good reasons
 - Always validate environment variables on startup
 - Include proper error handling with clear messages
 - Convert CrewOutput to strings before processing
 - Add health check endpoints for debugging
-
-## Recent Git Memory
-- Fixed OpenAI connection issues in Railway environment
-- Added robust setup patterns for all generated crews
 
 ## Documentation & Resources
 

@@ -1,82 +1,45 @@
 #!/usr/bin/env python3
 """
-CrewBuilder FastAPI Server
-Connects the beautiful Next.js frontend to the complete 10-agent backend
+CrewBuilder API Server V2
+Clean implementation using proper CrewAI patterns
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
-from typing import Dict, Any, List
-import json
-import traceback
+from typing import Dict, Any, Optional
 from datetime import datetime
+import traceback
 
-# Add the project root to Python path
+# Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# Configure CrewAI to use OpenAI
-import crewai_config  # This sets up CrewAI with the right LLM
+# Configure CrewAI
+import crewai_config
 
 # FastAPI imports
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-# Import all CrewBuilder agents
-try:
-    from agents import (
-        create_clarification_agent,
-        create_requirements_analyst,
-        create_system_architect, 
-        create_code_generator,
-        create_quality_assurance,
-        create_api_detective,
-        create_documentation_specialist,
-        create_infrastructure_analyst,
-        create_deployment_engineer,
-        create_hosting_assistant,
-        create_monitoring_engineer,
-        analyze_initial_requirement,
-        create_clarification_session
-    )
-    CLARIFICATION_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Clarification agent not available: {e}")
-    # Import core agents only
-    from agents import (
-        create_requirements_analyst,
-        create_system_architect, 
-        create_code_generator,
-        create_quality_assurance,
-        create_api_detective,
-        create_documentation_specialist,
-        create_infrastructure_analyst,
-        create_deployment_engineer,
-        create_hosting_assistant,
-        create_monitoring_engineer
-    )
-    CLARIFICATION_AVAILABLE = False
+# Import CrewBuilder V2
+from crewbuilder_crew_v2 import get_crewbuilder_v2
 
 # Create FastAPI app
 app = FastAPI(
-    title="CrewBuilder API",
-    description="AI Agent Meta-System - Building AI agents that build AI agent systems",
-    version="1.0.0"
+    title="CrewBuilder API V2",
+    description="Build AI agent systems the right way with CrewAI",
+    version="2.0.0"
 )
 
-# Configure CORS for frontend connection
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000",
-        "https://web-production-bd955.up.railway.app",
-        "https://crewbuilder.vercel.app",  # Live frontend!
-        "https://crewbuilder.app",  # Future custom domain
-        "https://crewbuilder-*.vercel.app"  # Preview deployments
+        "http://localhost:3000",
+        "https://crewbuilder.vercel.app",
+        "https://crewbuilder-*.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -84,1002 +47,368 @@ app.add_middleware(
 )
 
 # Request/Response Models
-class GenerationRequest(BaseModel):
-    requirement: str
-    skip_clarification: bool = False  # For cases where clarification was already done
-
-class GenerationResponse(BaseModel):
-    success: bool
-    data: Dict[str, Any] = None
-    error: str = None
-
-class DeploymentRequest(BaseModel):
-    requirement: str
-    api_keys: Dict[str, str]  # User's API keys (OpenAI, etc)
-    deploy_to_railway: bool = True
-
-class DeploymentResponse(BaseModel):
-    success: bool
-    deployment_url: str = None
-    dashboard_url: str = None
-    project_id: str = None
-    error: str = None
-
 class ClarificationRequest(BaseModel):
     requirement: str
 
-class ClarificationResponse(BaseModel):
-    success: bool
-    questions: List[Dict[str, Any]] = None
-    session_id: str = None
-    error: str = None
+class ClarificationChatRequest(BaseModel):
+    message: str
+    history: list = []
+    requirement: str
 
-class ClarificationAnswerRequest(BaseModel):
-    session_id: str
-    responses: Dict[str, str]
+class GenerationRequest(BaseModel):
+    requirement: str
+    clarification_context: Optional[Dict[str, Any]] = None
 
-class ClarificationAnswerResponse(BaseModel):
-    success: bool
-    refined_requirement: str = None
-    confidence_score: float = None
-    error: str = None
+class DeploymentRequest(BaseModel):
+    requirement: str
+    generated_code: str
+    api_keys: Dict[str, str]
 
-# Global agent instances (initialized once for performance)
-agents = {}
+class FeedbackRequest(BaseModel):
+    requirement: str
+    feedback: str
+    system_id: Optional[str] = None
 
-def initialize_agents():
-    """Initialize all CrewBuilder agents"""
-    global agents
-    
-    try:
-        print(" Initializing CrewBuilder agents...")
-        
-        # Check if we have OpenAI API key
-        openai_key = os.getenv('OPENAI_API_KEY')
-        if not openai_key:
-            print(" ERROR: OPENAI_API_KEY not found!")
-            print(" Available environment variables:")
-            for key in sorted(os.environ.keys()):
-                if 'KEY' in key.upper() or 'TOKEN' in key.upper():
-                    print(f"   {key}: ***hidden***")
-                else:
-                    print(f"   {key}: {os.environ[key][:30]}..." if len(os.environ[key]) > 30 else f"   {key}: {os.environ[key]}")
-            print(" Agents will use fallback mode and won't generate real content")
-            return False
-        else:
-            print(f" ✓ OPENAI_API_KEY found: {openai_key[:10]}...")  # Show first 10 chars
-        
-        if CLARIFICATION_AVAILABLE:
-            try:
-                agents['clarification_agent'] = create_clarification_agent()
-                print(" Clarification Agent ready")
-            except Exception as e:
-                print(f" Warning: Could not initialize Clarification Agent: {e}")
-        
-        agents['requirements_analyst'] = create_requirements_analyst()
-        print(" Requirements Analyst ready")
-        
-        agents['system_architect'] = create_system_architect()
-        print(" System Architect ready")
-        
-        agents['code_generator'] = create_code_generator()
-        print(" Code Generator ready")
-        
-        agents['quality_assurance'] = create_quality_assurance()
-        print(" Quality Assurance ready")
-        
-        agents['api_detective'] = create_api_detective()
-        print(" API Detective ready")
-        
-        agents['documentation_specialist'] = create_documentation_specialist()
-        print(" Documentation Specialist ready")
-        
-        agents['infrastructure_analyst'] = create_infrastructure_analyst()
-        print(" Infrastructure Analyst ready")
-        
-        agents['deployment_engineer'] = create_deployment_engineer()
-        print(" Deployment Engineer ready")
-        
-        agents['hosting_assistant'] = create_hosting_assistant()
-        print(" Hosting Assistant ready")
-        
-        agents['monitoring_engineer'] = create_monitoring_engineer()
-        print(" Monitoring Engineer ready")
-        
-        agent_count = len(agents)
-        print(f" {agent_count} CrewBuilder agents initialized and ready!")
-        return True
-        
-    except Exception as e:
-        print(f" Error initializing agents: {e}")
-        traceback.print_exc()
-        return False
-
-def run_complete_pipeline(requirement: str, skip_clarification: bool = False) -> Dict[str, Any]:
-    """
-    Run the complete 11-agent CrewBuilder pipeline
-    
-    Pipeline: Clarification → Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
-    """
-    
-    pipeline_results = {
-        'systemName': 'Generated System',
-        'agents': 0,
-        'complexity': 'moderate',
-        'estimatedTime': '15-30 minutes',
-        'estimatedCost': '$50-100',
-        'architecture': {},
-        'deployment': {},
-        'generatedAt': datetime.now().isoformat(),
-        'complexity_score': 2,
-        'pipeline_stages': []
-    }
-    
-    try:
-        # Stage 1: Requirements Analysis
-        print(" Stage 1: Analyzing business requirements...")
-        tech_spec = agents['requirements_analyst'].analyze_requirements(requirement)
-        
-        pipeline_results['complexity'] = tech_spec.complexity_estimate
-        pipeline_results['agents'] = tech_spec.estimated_agents
-        pipeline_results['systemName'] = extract_system_name(requirement)
-        pipeline_results['complexity_score'] = get_complexity_score(tech_spec.complexity_estimate)
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Requirements Analysis',
-            'status': 'completed',
-            'output': {
-                'complexity': tech_spec.complexity_estimate,
-                'estimated_agents': tech_spec.estimated_agents,
-                'agent_roles': tech_spec.agent_roles_needed[:3],  # First 3 for display
-                'apis_required': tech_spec.apis_required[:3]
-            }
-        })
-        
-        # Stage 2: System Architecture
-        print(" Stage 2: Designing crew architecture...")
-        crew_architecture = agents['system_architect'].design_crew_architecture(tech_spec)
-        
-        pipeline_results['architecture'] = {
-            'crew_name': crew_architecture.crew_name,
-            'crew_description': crew_architecture.crew_description,
-            'agents': [
-                {
-                    'name': agent.name,
-                    'role': agent.role,
-                    'goal': agent.goal[:60] + '...' if len(agent.goal) > 60 else agent.goal
-                }
-                for agent in crew_architecture.agents[:4]  # First 4 for display
-            ],
-            'tasks': [
-                {
-                    'name': task.name,
-                    'description': task.description[:50] + '...' if len(task.description) > 50 else task.description,
-                    'agent_name': task.agent_name
-                }
-                for task in crew_architecture.tasks[:4]  # First 4 for display
-            ],
-            'estimated_runtime': crew_architecture.estimated_runtime,
-            'workflow_name': crew_architecture.workflow.name
-        }
-        
-        pipeline_results['estimatedTime'] = crew_architecture.estimated_runtime
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'System Architecture',
-            'status': 'completed',
-            'output': {
-                'crew_name': crew_architecture.crew_name,
-                'agents_designed': len(crew_architecture.agents),
-                'tasks_defined': len(crew_architecture.tasks),
-                'workflow': crew_architecture.workflow.name
-            }
-        })
-        
-        # Stage 3: Code Generation
-        print(" Stage 3: Generating production code...")
-        generated_code = agents['code_generator'].generate_crew_code(crew_architecture)
-        
-        # Store generated code in results
-        pipeline_results['generated_code'] = generated_code.main_code
-        pipeline_results['requirements_txt'] = generated_code.requirements_txt
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Code Generation',
-            'status': 'completed',
-            'output': {
-                'main_code_length': len(generated_code.main_code),
-                'requirements_count': len(generated_code.requirements_txt.splitlines()),
-                'estimated_cost': str(generated_code.estimated_cost),
-                'performance_notes': str(generated_code.performance_notes)[:100] + '...' if len(str(generated_code.performance_notes)) > 100 else str(generated_code.performance_notes)
-            }
-        })
-        
-        # Stage 4: Quality Assurance
-        print(" Stage 4: Quality validation...")
-        qa_report = agents['quality_assurance'].validate_generated_system(generated_code, crew_architecture)
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Quality Assurance',
-            'status': 'completed',
-            'output': {
-                'approval_status': qa_report.approval_status,
-                'quality_score': qa_report.quality_score,
-                'issues_found': len(qa_report.issues_found),
-                'test_results': len(qa_report.test_results)
-            }
-        })
-        
-        # Stage 5: API Integration Planning
-        print(" Stage 5: API integration analysis...")
-        api_plan = agents['api_detective'].analyze_api_requirements(tech_spec, crew_architecture)
-        
-        pipeline_results['estimatedCost'] = str(api_plan.estimated_monthly_cost)
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'API Integration',
-            'status': 'completed',
-            'output': {
-                'apis_recommended': len(api_plan.recommended_apis),
-                'estimated_cost': api_plan.estimated_monthly_cost,
-                'free_tier_available': any(api.free_tier_available for api in api_plan.recommended_apis),
-                'setup_complexity': api_plan.overall_complexity
-            }
-        })
-        
-        # Stage 6: Documentation Generation
-        print(" Stage 6: Documentation creation...")
-        doc_plan = agents['documentation_specialist'].generate_documentation(
-            generated_code, api_plan, qa_report
-        )
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Documentation',
-            'status': 'completed',
-            'output': {
-                'user_guide_sections': len(doc_plan.user_guide.sections),
-                'technical_docs_length': len(doc_plan.technical_documentation.content),
-                'deployment_steps': len(doc_plan.deployment_guide.steps),
-                'estimated_reading_time': doc_plan.estimated_reading_time
-            }
-        })
-        
-        # Stage 7: Infrastructure Analysis
-        print(" Stage 7: Infrastructure recommendations...")
-        infra_recommendations = agents['infrastructure_analyst'].analyze_infrastructure_needs(
-            crew_architecture, api_plan, doc_plan
-        )
-        
-        pipeline_results['deployment'] = {
-            'platform': infra_recommendations.recommended_platform.name,
-            'estimatedSetupTime': infra_recommendations.estimated_setup_time,
-            'monthlyRunningCost': infra_recommendations.cost_analysis.monthly_estimate,
-            'security_score': infra_recommendations.security_assessment.overall_score,
-            'scalability_rating': infra_recommendations.scalability_analysis.scalability_score
-        }
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Infrastructure Analysis',
-            'status': 'completed',
-            'output': {
-                'recommended_platform': infra_recommendations.recommended_platform.name,
-                'setup_time': infra_recommendations.estimated_setup_time,
-                'monthly_cost': str(infra_recommendations.cost_analysis.monthly_estimate),
-                'security_score': infra_recommendations.security_assessment.overall_score
-            }
-        })
-        
-        # Stage 8: Deployment Engineering
-        print(" Stage 8: Deployment automation...")
-        deployment_plan = agents['deployment_engineer'].create_deployment_plan(
-            crew_architecture, infra_recommendations, api_plan
-        )
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Deployment Engineering',
-            'status': 'completed',
-            'output': {
-                'deployment_type': deployment_plan.deployment_configuration.deployment_type,
-                'cicd_pipeline': deployment_plan.cicd_pipeline.pipeline_type,
-                'secrets_managed': len(deployment_plan.secrets_management.required_secrets),
-                'estimated_deployment_time': deployment_plan.estimated_deployment_time
-            }
-        })
-        
-        # Stage 9: Hosting Assistance
-        print(" Stage 9: Hosting guidance...")
-        hosting_plan = agents['hosting_assistant'].create_hosting_assistance_plan(
-            infra_recommendations, deployment_plan, crew_architecture
-        )
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Hosting Assistance',
-            'status': 'completed',
-            'output': {
-                'setup_guide_steps': len(hosting_plan.platform_setup_guide.steps),
-                'configuration_items': len(hosting_plan.configuration_assistance.configuration_steps),
-                'optimization_recommendations': len(hosting_plan.resource_optimization.recommendations),
-                'support_level': hosting_plan.ongoing_support.support_level
-            }
-        })
-        
-        # Stage 10: Monitoring Engineering
-        print(" Stage 10: Monitoring setup...")
-        monitoring_plan = agents['monitoring_engineer'].generate_monitoring_plan(
-            hosting_plan, deployment_plan, crew_architecture
-        )
-        
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Monitoring Engineering',
-            'status': 'completed',
-            'output': {
-                'monitoring_stack': monitoring_plan.monitoring_stack.primary_platform,
-                'alert_channels': len(monitoring_plan.alerting_system.notification_channels),
-                'dashboard_count': len(monitoring_plan.dashboard_configuration.dashboards),
-                'estimated_cost': monitoring_plan.estimated_cost,
-                'implementation_timeline': monitoring_plan.implementation_timeline
-            }
-        })
-        
-        print(" Complete 10-agent pipeline finished successfully!")
-        
-        return pipeline_results
-        
-    except Exception as e:
-        print(f" Pipeline error at stage {len(pipeline_results.get('pipeline_stages', []))}: {e}")
-        print(f" Error type: {type(e).__name__}")
-        print(f" Error details: {str(e)}")
-        traceback.print_exc()
-        
-        # Return partial results with error info
-        pipeline_results['pipeline_stages'].append({
-            'stage': 'Error',
-            'status': 'failed',
-            'output': {
-                'error': str(e),
-                'error_type': type(e).__name__,
-                'completed_stages': len([s for s in pipeline_results['pipeline_stages'] if s['status'] == 'completed'])
-            }
-        })
-        
-        return pipeline_results
-
-def extract_system_name(requirement: str) -> str:
-    """Extract a reasonable system name from the requirement"""
-    keywords = ['automate', 'automation', 'system', 'platform', 'solution', 'tool', 'assistant', 'bot']
-    domains = ['content', 'marketing', 'sales', 'customer', 'email', 'social', 'data', 'inventory', 'finance', 'hr']
-    
-    requirement_lower = requirement.lower()
-    
-    found_domain = None
-    found_keyword = None
-    
-    for domain in domains:
-        if domain in requirement_lower:
-            found_domain = domain
-            break
-    
-    for keyword in keywords:
-        if keyword in requirement_lower:
-            found_keyword = keyword
-            break
-    
-    if found_domain and found_keyword:
-        return f"{found_domain.title()} {found_keyword.title()}"
-    elif found_domain:
-        return f"{found_domain.title()} System"
-    elif found_keyword:
-        return f"Business {found_keyword.title()}"
-    else:
-        return "Business Automation System"
-
-def get_complexity_score(complexity: str) -> int:
-    """Convert complexity to numeric score"""
-    mapping = {'simple': 1, 'moderate': 2, 'complex': 3}
-    return mapping.get(complexity, 2)
-
-# API Endpoints
-
+# Health Check
 @app.get("/")
 async def root():
     """Health check endpoint"""
     return {
-        "message": "CrewBuilder API - Building AI agents that build AI agent systems",
-        "version": "1.0.0",
+        "message": "🚀 CrewBuilder V2 API Running!",
         "status": "operational",
-        "agents_ready": len(agents) >= 10  # At least 10 core agents
-    }
-
-@app.get("/")
-def root():
-    """Root endpoint - welcome message"""
-    return {
-        "message": "🚀 CrewBuilder API is Running!",
-        "status": "active",
-        "version": "1.0.0",
-        "description": "AI-powered system that generates and deploys AI agent teams",
+        "version": "2.0.0",
+        "description": "AI-powered system that builds CrewAI systems properly",
         "endpoints": {
-            "docs": "/docs",
-            "health": "/health",
-            "clarify": "/api/clarify",
-            "clarify_answer": "/api/clarify/answer",
-            "generate": "/api/generate",
-            "deploy": "/api/deploy",
-            "feedback": "/api/feedback"
-        },
-        "frontend": "Deploy frontend separately or visit /docs for API testing",
-        "agents": len(agents) if agents else "Initializing..."
+            "/health": "Detailed health check",
+            "/api/clarify": "Start clarification phase",
+            "/api/clarify/chat": "Conversational clarification",
+            "/api/generate": "Generate complete system",
+            "/api/deploy": "Deploy to Railway",
+            "/api/feedback": "Submit feedback"
+        }
     }
 
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
-    # Check API key status
     api_key = os.getenv('OPENAI_API_KEY', '')
-    has_newline = '\n' in api_key
     
     return {
         "status": "healthy",
-        "agents_initialized": len(agents),
-        "agents_ready": [name for name in agents.keys()],
         "timestamp": datetime.now().isoformat(),
-        "api_key_status": {
-            "present": bool(api_key),
-            "length": len(api_key),
-            "has_newline": has_newline,
-            "cleaned_length": len(api_key.replace('\n', '').strip())
+        "environment": {
+            "openai_configured": bool(api_key),
+            "crewai_version": "0.148.0",
+            "python_version": sys.version.split()[0]
+        },
+        "crewbuilder": {
+            "architecture": "V2 - Simple agents, smart tasks",
+            "agents": 8,
+            "process": "hierarchical"
         }
     }
 
-@app.get("/test-openai")
-async def test_openai_connection():
-    """Test OpenAI connectivity from Railway environment"""
-    import subprocess
-    import sys
-    
+# Clarification Endpoints
+@app.post("/api/clarify")
+async def clarify_requirement(request: ClarificationRequest):
+    """
+    Start clarification phase for a requirement
+    Returns clarification questions and API verification
+    """
     try:
-        # Run the test script
-        result = subprocess.run(
-            [sys.executable, "test_railway_openai.py"],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+        if not request.requirement.strip():
+            raise HTTPException(status_code=400, detail="Requirement cannot be empty")
         
-        return {
-            "success": result.returncode == 0,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "return_code": result.returncode
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-
-@app.get("/test-network")
-async def test_network_details():
-    """Detailed network diagnostics"""
-    import subprocess
-    import sys
-    
-    try:
-        # Run the detailed network test
-        result = subprocess.run(
-            [sys.executable, "test_network_details.py"],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        print(f"📝 Clarification request: {request.requirement[:100]}...")
         
-        return {
-            "success": result.returncode == 0,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "return_code": result.returncode
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-
-@app.get("/test-openai-debug")
-async def test_openai_debug():
-    """Debug OpenAI SDK specific issues"""
-    import subprocess
-    import sys
-    
-    try:
-        result = subprocess.run(
-            [sys.executable, "test_openai_debug.py"],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+        # Get CrewBuilder instance
+        crewbuilder = get_crewbuilder_v2()
         
-        return {
-            "success": result.returncode == 0,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "return_code": result.returncode
-        }
+        # Run clarification phase
+        result = crewbuilder.run_clarification_phase(request.requirement)
+        
+        if result['success']:
+            return {
+                "success": True,
+                "questions": result.get('clarification_questions', ''),
+                "api_report": result.get('api_report', ''),
+                "session_id": f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=result.get('error', 'Clarification failed')
+            )
+            
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-
-# Global storage for clarification sessions (in production, use a database)
-clarification_sessions = {}
+        print(f"❌ Clarification error: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/clarify/chat")
-async def clarify_chat(request: dict):
+async def clarify_chat(request: ClarificationChatRequest):
     """
-    Conversational clarification - responds to user messages dynamically
+    Conversational clarification using simple clarification specialist
     """
     try:
-        user_message = request.get('message', '')
-        conversation_history = request.get('history', [])
-        original_requirement = request.get('requirement', '')
-        
-        if not CLARIFICATION_AVAILABLE:
-            return {"response": "Let me help you with that. Can you tell me more about your specific use case?"}
-        
-        # Check if agents are initialized
-        if 'clarification_agent' not in agents:
-            print("📝 Agents not initialized, initializing now...")
-            if not initialize_agents():
-                return {"response": "I'm having trouble initializing. Can you tell me more about your needs?", "ready_to_build": False}
-        
-        # Build context from conversation
-        context = f"Original requirement: {original_requirement}\n\n"
-        context += "Conversation so far:\n"
-        for msg in conversation_history[-5:]:  # Last 5 messages for context
-            context += f"{msg['role']}: {msg['content']}\n"
-        context += f"User: {user_message}\n"
-        
-        # Count exchanges to determine if ready to build
-        user_messages = len([m for m in conversation_history if m['role'] == 'user']) + 1
-        
-        # Create task for clarification agent
+        from agents.simple_agents import create_clarification_specialist
         from crewai import Task, Crew
+        
+        # Get the clarification specialist
+        clarification_agent = create_clarification_specialist()
+        
+        # Build context
+        context = f"Original requirement: {request.requirement}\n\n"
+        context += "Conversation so far:\n"
+        for msg in request.history[-5:]:
+            context += f"{msg['role']}: {msg['content']}\n"
+        context += f"User: {request.message}\n"
+        
+        # Count exchanges
+        user_messages = len([m for m in request.history if m['role'] == 'user']) + 1
+        
+        # Create conversational task
         task = Task(
             description=f"""
-            You are having a clarification conversation with a user about their specific automation needs.
+            Have a natural conversation about their automation needs.
             
             {context}
             
-            IMPORTANT: 
-            - The user wants to: "{original_requirement}"
-            - Respond SPECIFICALLY to what they just said: "{user_message}"
-            - Ask ONE targeted question about their specific use case
-            - Be conversational and natural, not robotic
-            - Focus on details that matter for building their system
+            Requirements: "{request.requirement}"
+            Latest message: "{request.message}"
             
             Exchange count: {user_messages}
             
-            {f"After {user_messages} exchanges, if you have enough information, say 'I have everything I need to build you an amazing system. Let me get started on designing your custom AI agents...'" if user_messages >= 4 else "Keep asking targeted questions to understand their needs better."}
+            {f"After {user_messages} exchanges, if you have enough info, say you're ready to build." if user_messages >= 4 else "Ask ONE specific question about their use case."}
             
-            DO NOT ask generic questions. Ask about:
-            - Specific integrations they mentioned (like HeyGen, GoHighLevel, etc.)
-            - Volume and frequency of their workflow
-            - Current pain points in their process
-            - Technical constraints or preferences
+            Focus on their specific tools, volumes, pain points.
             """,
-            agent=agents['clarification_agent'],
-            expected_output="A natural conversational response with one specific follow-up question about their use case"
+            agent=clarification_agent,
+            expected_output="Natural response with follow-up question"
         )
         
-        crew = Crew(agents=[agents['clarification_agent']], tasks=[task])
+        # Simple crew for conversation
+        crew = Crew(
+            agents=[clarification_agent],
+            tasks=[task],
+            verbose=False
+        )
+        
         result = crew.kickoff()
         response_text = str(result)
         
-        # Check if ready to build
-        ready_indicators = [
-            "everything i need",
-            "let me get started",
-            "ready to build",
-            "start designing",
-            "begin building"
-        ]
-        ready_to_build = any(indicator in response_text.lower() for indicator in ready_indicators) or user_messages >= 5
+        # Check if ready
+        ready_indicators = ["ready to build", "let me get started", "everything i need"]
+        ready = any(ind in response_text.lower() for ind in ready_indicators) or user_messages >= 5
         
         return {
             "response": response_text,
-            "ready_to_build": ready_to_build
+            "ready_to_build": ready
         }
         
     except Exception as e:
-        print(f"❌ Clarification chat error: {str(e)}")
-        # Fallback response
+        print(f"❌ Chat error: {str(e)}")
         return {
-            "response": "I'd love to understand more about what you're trying to achieve. Can you tell me about your current process?",
+            "response": "I'd love to understand more about your needs. Can you tell me about your current process?",
             "ready_to_build": False
         }
 
-@app.post("/api/clarify", response_model=ClarificationResponse)
-async def clarify_requirement(request: ClarificationRequest):
-    """
-    Start a clarification session for a requirement
-    
-    This endpoint analyzes the initial requirement and returns questions
-    to help clarify and refine what the user needs.
-    """
-    
-    try:
-        if not request.requirement or not request.requirement.strip():
-            raise HTTPException(status_code=400, detail="Valid requirement string is required")
-        
-        print(f"💬 Clarification request received: {request.requirement[:100]}...")
-        
-        # Check if clarification is available
-        if not CLARIFICATION_AVAILABLE:
-            raise HTTPException(status_code=501, detail="Clarification agent not available in this deployment")
-            
-        # Check if agents are initialized
-        if 'clarification_agent' not in agents:
-            print(" Agents not initialized, initializing now...")
-            if not initialize_agents():
-                raise HTTPException(status_code=500, detail="Failed to initialize agents")
-        
-        # Generate clarification questions
-        questions = analyze_initial_requirement(
-            agents['clarification_agent'], 
-            request.requirement
-        )
-        
-        # Create session
-        session_id = f"clarify_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash(request.requirement) % 10000}"
-        
-        # Store session data
-        clarification_sessions[session_id] = {
-            "requirement": request.requirement,
-            "questions": questions,
-            "created_at": datetime.now().isoformat()
-        }
-        
-        # Convert questions to dict format for API response
-        questions_dict = [
-            {
-                "question": q.question,
-                "context": q.context,
-                "options": q.options,
-                "type": q.question_type
-            }
-            for q in questions
-        ]
-        
-        print(f"✅ Generated {len(questions)} clarification questions")
-        
-        return ClarificationResponse(
-            success=True,
-            questions=questions_dict,
-            session_id=session_id
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Clarification error: {e}")
-        traceback.print_exc()
-        
-        return ClarificationResponse(
-            success=False,
-            error=f"Clarification failed: {str(e)}"
-        )
-
-@app.post("/api/clarify/answer", response_model=ClarificationAnswerResponse)
-async def answer_clarification(request: ClarificationAnswerRequest):
-    """
-    Submit answers to clarification questions and get refined requirements
-    """
-    
-    try:
-        # Validate session
-        if request.session_id not in clarification_sessions:
-            raise HTTPException(status_code=404, detail="Invalid or expired session ID")
-        
-        session_data = clarification_sessions[request.session_id]
-        
-        print(f"📝 Processing clarification answers for session: {request.session_id}")
-        
-        # Create full clarification session
-        session = create_clarification_session(
-            agents['clarification_agent'],
-            session_data['requirement'],
-            request.responses
-        )
-        
-        # Store the refined requirements
-        session_data['refined_requirements'] = session.refined_requirements
-        session_data['confidence_score'] = session.confidence_score
-        
-        print(f"✅ Requirements refined with confidence: {session.confidence_score:.2f}")
-        
-        return ClarificationAnswerResponse(
-            success=True,
-            refined_requirement=session.refined_requirements.refined_requirement,
-            confidence_score=session.confidence_score
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Answer processing error: {e}")
-        traceback.print_exc()
-        
-        return ClarificationAnswerResponse(
-            success=False,
-            error=f"Failed to process answers: {str(e)}"
-        )
-
-@app.post("/api/generate", response_model=GenerationResponse)
+# Generation Endpoint
+@app.post("/api/generate")
 async def generate_system(request: GenerationRequest):
     """
-    Generate a complete AI agent system from business requirements
-    
-    This endpoint runs the complete 10-agent CrewBuilder pipeline:
-    Requirements → Architecture → Code → QA → APIs → Docs → Infrastructure → Deployment → Hosting → Monitoring
+    Generate complete CrewAI system using hierarchical orchestration
     """
-    
     try:
-        if not request.requirement or not request.requirement.strip():
-            raise HTTPException(status_code=400, detail="Valid requirement string is required")
+        if not request.requirement.strip():
+            raise HTTPException(status_code=400, detail="Requirement cannot be empty")
         
-        print(f" Generation request received: {request.requirement[:100]}...")
+        print(f"🚀 Generation request: {request.requirement[:100]}...")
         
-        # Check if agents are initialized
-        if len(agents) < 10:
-            print(" Agents not initialized, initializing now...")
-            if not initialize_agents():
-                raise HTTPException(
-                    status_code=503, 
-                    detail="CrewBuilder agents require OPENAI_API_KEY to function. Please ensure the API key is set in Railway environment variables."
-                )
+        # Get CrewBuilder instance
+        crewbuilder = get_crewbuilder_v2()
         
-        # Check if this requirement was clarified
-        refined_requirement = request.requirement
-        for session_id, session_data in clarification_sessions.items():
-            if 'refined_requirements' in session_data:
-                if session_data['requirement'] == request.requirement:
-                    refined_requirement = session_data['refined_requirements'].refined_requirement
-                    print(f"🎯 Using refined requirement from session: {session_id}")
-                    break
+        # Build complete system
+        result = crewbuilder.build_from_requirement(request.requirement)
         
-        # Run the complete pipeline
-        result = run_complete_pipeline(refined_requirement, skip_clarification=request.skip_clarification)
-        
-        print(f" Generation completed successfully!")
-        
-        # Ensure the result is JSON serializable
-        try:
-            # Test serialization
-            import json
-            json.dumps(result)
-        except TypeError as e:
-            print(f" Warning: Result contains non-serializable data: {e}")
-            # Remove non-serializable fields
-            if 'generated_code' in result and hasattr(result['generated_code'], '__dict__'):
-                result['generated_code'] = str(result['generated_code'])
-            if 'requirements_txt' in result and hasattr(result['requirements_txt'], '__dict__'):
-                result['requirements_txt'] = str(result['requirements_txt'])
-        
-        return GenerationResponse(
-            success=True,
-            data=result
-        )
-        
-    except HTTPException:
-        raise
+        if result['success']:
+            # Format for frontend
+            return {
+                "success": True,
+                "data": {
+                    "systemName": extract_system_name(request.requirement),
+                    "agents": count_agents_in_code(result.get('generated_code', '')),
+                    "complexity": determine_complexity(result),
+                    "estimatedTime": f"{result.get('execution_time', 0):.1f} seconds",
+                    "estimatedCost": "$50-100/month",
+                    "architecture": {
+                        "summary": result.get('architecture', '')[:500]
+                    },
+                    "deployment": {
+                        "config": result.get('deployment_config', '')
+                    },
+                    "generatedAt": datetime.now().isoformat(),
+                    "complexity_score": 2,
+                    "pipeline_stages": format_pipeline_stages(result),
+                    "generated_code": result.get('generated_code', ''),
+                    "requirements_txt": result.get('requirements_txt', ''),
+                    "documentation": result.get('documentation', '')
+                }
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=result.get('error', 'Generation failed')
+            )
+            
     except Exception as e:
-        print(f" Generation error: {e}")
+        print(f"❌ Generation error: {str(e)}")
         traceback.print_exc()
-        
-        return GenerationResponse(
-            success=False,
-            error=f"Generation failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/feedback")
-async def collect_feedback(feedback_data: Dict[str, Any]):
-    """Collect user feedback for learning improvements"""
-    try:
-        print(f"📝 Feedback received: {feedback_data}")
-        
-        # Store feedback for future learning (placeholder)
-        # In production, this would go to a database
-        
-        return {
-            "success": True,
-            "message": "Feedback collected successfully"
-        }
-        
-    except Exception as e:
-        print(f" Feedback error: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-@app.post("/api/deploy", response_model=DeploymentResponse)
+# Deployment Endpoint
+@app.post("/api/deploy")
 async def deploy_system(request: DeploymentRequest):
     """
-    Generate AND deploy a complete AI agent system to Railway
-    
-    This endpoint:
-    1. Runs the complete 10-agent pipeline to generate the system
-    2. Deploys the generated code directly to Railway
-    3. Returns live URLs for the deployed system
+    Deploy generated system to Railway
     """
-    
     try:
-        if not request.requirement or not request.requirement.strip():
-            raise HTTPException(status_code=400, detail="Valid requirement string is required")
+        # Import deployment module
+        from deployment.railway_deployer import deploy_to_railway
         
-        if not request.api_keys or 'OPENAI_API_KEY' not in request.api_keys:
-            raise HTTPException(status_code=400, detail="OpenAI API key is required for deployment")
+        # Prepare deployment package
+        deployment_package = {
+            "main.py": request.generated_code,
+            "requirements.txt": "crewai==0.148.0\ncrewai-tools\nopenai>=1.0.0",
+            ".env.example": generate_env_example(request.api_keys)
+        }
         
-        print(f"🚀 Deployment request received: {request.requirement[:100]}...")
-        
-        # Step 1: Generate the system using existing pipeline
-        print("📦 Step 1/3: Generating system code...")
-        generation_result = await generate_system(GenerationRequest(requirement=request.requirement))
-        
-        if not generation_result.success:
-            raise HTTPException(status_code=500, detail=f"System generation failed: {generation_result.error}")
-        
-        # Step 2: Deploy to Railway if requested
-        if request.deploy_to_railway:
-            try:
-                print("🚂 Step 2/3: Initiating Railway deployment...")
-                from deployment.railway_deployer import RailwayDeploymentManager
-                
-                deployment_manager = RailwayDeploymentManager()
-                
-                # Create a unique user ID (in production, this would come from auth)
-                user_id = f"user_{hash(request.requirement)}"[:10]
-                
-                # Deploy the generated system
-                print(f"🔧 Creating deployment for user: {user_id}")
-                print("📤 Step 3/3: Deploying to Railway infrastructure...")
-                deployment = deployment_manager.create_deployment(
-                    user_id=user_id,
-                    generated_system={
-                        'code': generation_result.data.get('generated_code', ''),
-                        'requirements': generation_result.data.get('requirements_txt', ''),
-                        'original_requirements': request.requirement
-                    },
-                    api_keys=request.api_keys
-                )
-                
-                if deployment['success']:
-                    print(f"✅ Deployment successful: {deployment['deployment_url']}")
-                    
-                    return DeploymentResponse(
-                        success=True,
-                        deployment_url=deployment['deployment_url'],
-                        dashboard_url=deployment['dashboard_url'],
-                        project_id=deployment['project_id']
-                    )
-                else:
-                    error_msg = deployment.get('error', 'Unknown error')
-                    error_type = deployment.get('error_type', 'UnknownError')
-                    print(f"❌ Deployment failed at step 3: {error_type} - {error_msg}")
-                    raise Exception(f"Deployment failed: {error_msg}")
-                    
-            except ImportError:
-                print("❌ ImportError: Railway deployment module not available")
-                raise HTTPException(status_code=501, detail="Railway deployment not configured. Please set RAILWAY_TOKEN.")
-            except Exception as e:
-                print(f"❌ Deployment error: {type(e).__name__} - {str(e)}")
-                raise HTTPException(status_code=500, detail=f"Deployment failed: {str(e)}")
-        
-        # If not deploying, just return the generated code info
-        return DeploymentResponse(
-            success=True,
-            deployment_url="Not deployed - code generated only",
-            dashboard_url="N/A",
-            project_id="N/A"
+        # Deploy to Railway
+        result = await deploy_to_railway(
+            deployment_package,
+            request.requirement,
+            request.api_keys
         )
         
-    except HTTPException:
-        raise
+        return {
+            "success": result.get('success', False),
+            "deployment_url": result.get('deployment_url'),
+            "dashboard_url": result.get('dashboard_url'),
+            "project_id": result.get('project_id'),
+            "error": result.get('error')
+        }
+        
     except Exception as e:
-        print(f"❌ Deployment error: {e}")
-        traceback.print_exc()
-        
-        return DeploymentResponse(
-            success=False,
-            error=f"Deployment failed: {str(e)}"
-        )
+        print(f"❌ Deployment error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-# Initialize agents on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize all agents when the server starts"""
-    print("\n=== CrewBuilder API Server Starting ===")
-    print(f"Python version: {sys.version}")
-    print(f"Working directory: {Path.cwd()}")
-    
-    # Check environment variables
-    print("\nEnvironment Check:")
-    print(f"  OPENAI_API_KEY: {'✓ Present' if os.getenv('OPENAI_API_KEY') else '✗ Missing'}")
-    print(f"  ANTHROPIC_API_KEY: {'✓ Present' if os.getenv('ANTHROPIC_API_KEY') else '✗ Missing (optional)'}")
-    print(f"  RAILWAY_TOKEN: {'✓ Present' if os.getenv('RAILWAY_TOKEN') else '✗ Missing'}")
-    print(f"  PORT: {os.getenv('PORT', 'Not set (will use 8000)')}")
-    
-    # Test OpenAI connectivity
-    print("\nNetwork Check:")
+# Feedback Endpoint
+@app.post("/api/feedback")
+async def submit_feedback(request: FeedbackRequest):
+    """
+    Collect user feedback for continuous improvement
+    """
     try:
-        import socket
-        ip = socket.gethostbyname('api.openai.com')
-        print(f"  api.openai.com: ✓ Resolves to {ip}")
+        # In production, save to database
+        print(f"📝 Feedback received:")
+        print(f"   Requirement: {request.requirement[:100]}...")
+        print(f"   Feedback: {request.feedback}")
+        print(f"   System ID: {request.system_id}")
+        
+        # For now, just acknowledge
+        return {
+            "success": True,
+            "message": "Thank you for your feedback! We use this to improve CrewBuilder."
+        }
+        
     except Exception as e:
-        print(f"  api.openai.com: ✗ DNS failed - {e}")
+        print(f"❌ Feedback error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Helper Functions
+def extract_system_name(requirement: str) -> str:
+    """Extract a meaningful system name from requirement"""
+    req_lower = requirement.lower()
     
-    # Test critical imports
-    print("\nTesting imports:")
-    critical_modules = {
-        'crewai': True,  # Required
-        'openai': True,  # Required
-        'pydantic': True,  # Required
-        'fastapi': True,  # Required
-        'langchain': False,  # Optional
-        'anthropic': False  # Optional
+    # Look for key terms
+    if "heygen" in req_lower and "video" in req_lower:
+        return "Video Generation System"
+    elif "crm" in req_lower or "gohighlevel" in req_lower:
+        return "CRM Automation System"
+    elif "content" in req_lower and "script" in req_lower:
+        return "Content Creation System"
+    elif "research" in req_lower:
+        return "Research Automation System"
+    else:
+        # Extract first meaningful noun
+        words = requirement.split()[:10]
+        for word in words:
+            if len(word) > 4 and word.isalpha():
+                return f"{word.title()} System"
+        return "AI Agent System"
+
+def count_agents_in_code(code: str) -> int:
+    """Count agents in generated code"""
+    count = code.lower().count('agent(')
+    return max(count, 3)  # Minimum 3 agents
+
+def determine_complexity(result: Dict[str, Any]) -> str:
+    """Determine system complexity"""
+    review = result.get('quality_review', '')
+    code_length = len(result.get('generated_code', ''))
+    
+    if 'simple' in review.lower() or code_length < 1000:
+        return 'simple'
+    elif 'complex' in review.lower() or code_length > 3000:
+        return 'complex'
+    return 'moderate'
+
+def format_pipeline_stages(result: Dict[str, Any]) -> list:
+    """Format pipeline stages for frontend"""
+    stages = []
+    
+    # Define stage mapping
+    stage_info = {
+        'clarification_questions': 'Clarification',
+        'api_report': 'API Verification',
+        'architecture': 'Architecture Design',
+        'generated_code': 'Code Generation',
+        'quality_review': 'Quality Review',
+        'documentation': 'Documentation'
     }
     
-    import_errors = []
-    for module_name, required in critical_modules.items():
-        try:
-            module = __import__(module_name)
-            version = getattr(module, '__version__', 'unknown')
-            print(f"  {module_name}: ✓ {version}")
-        except ImportError as e:
-            if required:
-                import_errors.append(f"{module_name}: {e}")
-                print(f"  {module_name}: ✗ ERROR - {e}")
-            else:
-                print(f"  {module_name}: ✗ Not installed (optional)")
+    for key, name in stage_info.items():
+        if key in result and result[key]:
+            stages.append({
+                'stage': name,
+                'status': 'completed',
+                'output': result[key][:200] if isinstance(result[key], str) else str(result[key])
+            })
     
-    if import_errors:
-        print(f"\n✗ CRITICAL: Required modules missing! This will cause crashes.")
-        print("  Install with: pip install -r requirements.txt")
-        for error in import_errors:
-            print(f"  - {error}")
-    
-    # Initialize agents with detailed error handling
-    print("\nInitializing agents:")
-    try:
-        success = initialize_agents()
-        if success:
-            print(f"\n✓ CrewBuilder API ready! Initialized {len(agents)} agents.")
-        else:
-            print("\n✗ Warning: Some agents failed to initialize")
-    except Exception as e:
-        print(f"\n✗ ERROR during agent initialization: {e}")
-        import traceback
-        traceback.print_exc()
-        print("\nThis error is likely causing the Railway crash!")
-    
-    print("=== Startup Complete ===\n")
+    return stages
 
+def generate_env_example(api_keys: Dict[str, str]) -> str:
+    """Generate .env.example file content"""
+    env_content = "# Environment Variables for Generated CrewAI System\n\n"
+    
+    # Always include OpenAI
+    env_content += "# Required - OpenAI API Key\n"
+    env_content += "OPENAI_API_KEY=your_openai_key_here\n\n"
+    
+    # Add other keys mentioned
+    for key, description in api_keys.items():
+        if key.upper() != 'OPENAI_API_KEY':
+            env_content += f"# {description}\n"
+            env_content += f"{key.upper()}=your_{key.lower()}_key_here\n\n"
+    
+    return env_content
+
+# Run the server
 if __name__ == "__main__":
     import uvicorn
     
-    print(" Starting CrewBuilder FastAPI Server...")
-    print("Frontend: http://localhost:3000")
-    print("API: http://localhost:8000")
-    print("Docs: http://localhost:8000/docs")
+    port = int(os.environ.get("PORT", 8000))
+    print(f"\n🚀 Starting CrewBuilder V2 API on port {port}...")
+    print(f"📍 Docs available at: http://localhost:{port}/docs")
     
-    uvicorn.run(
-        "api_server:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=port)
