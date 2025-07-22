@@ -521,6 +521,34 @@ async def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
+@app.get("/test-openai")
+async def test_openai_connection():
+    """Test OpenAI connectivity from Railway environment"""
+    import subprocess
+    import sys
+    
+    try:
+        # Run the test script
+        result = subprocess.run(
+            [sys.executable, "test_railway_openai.py"],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        return {
+            "success": result.returncode == 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "return_code": result.returncode
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+
 # Global storage for clarification sessions (in production, use a database)
 clarification_sessions = {}
 
