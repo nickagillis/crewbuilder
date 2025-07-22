@@ -4,27 +4,96 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, ArrowRight, Users, Cog, Monitor } from 'lucide-react'
 import RequirementInput from '../components/RequirementInput'
+import ClarificationFlow from '../components/ClarificationFlow'
 import GenerationProgress from '../components/GenerationProgress'
 import SystemOutput from '../components/SystemOutput'
 import DeploymentFlow from '../components/DeploymentFlow'
 
 export default function Home() {
-  const [currentStep, setCurrentStep] = useState<'input' | 'generating' | 'complete' | 'deploying'>('input')
+  const [currentStep, setCurrentStep] = useState<'input' | 'clarifying' | 'generating' | 'complete' | 'deploying'>('input')
   const [generatedSystem, setGeneratedSystem] = useState(null)
   const [userRequirement, setUserRequirement] = useState('')
   const [deploymentInfo, setDeploymentInfo] = useState(null)
+  const [clarificationData, setClarificationData] = useState<any>(null)
 
   const handleStartGeneration = async (requirement: string) => {
     setUserRequirement(requirement)
-    setCurrentStep('generating')
+    setCurrentStep('clarifying')
     
     try {
-      const response = await fetch('/api/generate', {
+      // First, get clarification questions
+      const clarifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://web-production-bd955.up.railway.app'}/api/clarify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ requirement }),
+      })
+
+      if (!clarifyResponse.ok) {
+        throw new Error('Clarification failed')
+      }
+
+      const clarifyResult = await clarifyResponse.json()
+      
+      if (clarifyResult.success) {
+        setClarificationData(clarifyResult)
+      } else {
+        // If clarification fails, skip to generation
+        handleSkipClarification()
+      }
+    } catch (error) {
+      console.error('Clarification error:', error)
+      // Skip clarification and go straight to generation
+      handleSkipClarification()
+    }
+  }
+
+  const handleClarificationComplete = async (responses: Record<string, string>) => {
+    setCurrentStep('generating')
+    
+    try {
+      // Submit answers and get refined requirements
+      const answerResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://web-production-bd955.up.railway.app'}/api/clarify/answer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          session_id: clarificationData.session_id,
+          responses 
+        }),
+      })
+
+      if (!answerResponse.ok) {
+        throw new Error('Answer submission failed')
+      }
+
+      // Now generate with refined requirements
+      await generateSystem(userRequirement, false)
+    } catch (error) {
+      console.error('Answer submission error:', error)
+      // Fallback to generation without clarification
+      await generateSystem(userRequirement, true)
+    }
+  }
+
+  const handleSkipClarification = async () => {
+    setCurrentStep('generating')
+    await generateSystem(userRequirement, true)
+  }
+
+  const generateSystem = async (requirement: string, skipClarification: boolean) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://web-production-bd955.up.railway.app'}/api/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          requirement,
+          skip_clarification: skipClarification 
+        }),
       })
 
       if (!response.ok) {
@@ -41,7 +110,6 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Generation error:', error)
-      // Handle error state
       alert('Failed to generate system. Please try again.')
       setCurrentStep('input')
     }
@@ -51,7 +119,7 @@ export default function Home() {
     setCurrentStep('deploying')
     
     try {
-      const response = await fetch('/api/deploy', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://web-production-bd955.up.railway.app'}/api/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,6 +214,15 @@ export default function Home() {
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-8 border border-gray-700">
           {currentStep === 'input' && (
             <RequirementInput onStartGeneration={handleStartGeneration} />
+          )}
+          
+          {currentStep === 'clarifying' && clarificationData && (
+            <ClarificationFlow
+              questions={clarificationData.questions}
+              sessionId={clarificationData.session_id}
+              onComplete={handleClarificationComplete}
+              onSkip={handleSkipClarification}
+            />
           )}
           
           {currentStep === 'generating' && (

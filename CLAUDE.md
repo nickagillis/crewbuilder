@@ -119,7 +119,9 @@ crewbuilder/
 ## Known Issues & TODOs
 - [ ] Test full deployment flow with actual Railway tokens
 - [x] Railway deployment implementation is complete
-- [ ] Add Clarification Agent for requirements refinement
+- [x] Add Clarification Agent for requirements refinement (backend complete)
+- [ ] Integrate clarification flow in frontend UI (Option 1: Front-loaded)
+- [ ] Future: Implement Option 3 (Hybrid approach with assumptions)
 - [ ] Implement client dashboard generation
 - [ ] Switch to service-based deployment model
 - [ ] Validate deployed systems work in production
